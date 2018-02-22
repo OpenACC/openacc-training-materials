@@ -63,6 +63,7 @@ module laplace2d
           error = max( error, abs(Anew(i,j)-A(i,j)) )
         end do
       end do
+          !$acc end kernels
       calcNext = error
     end function calcNext
 
@@ -79,6 +80,7 @@ module laplace2d
           A(i,j) = Anew(i,j)
         end do
       end do
+      !$acc end kernels
     end subroutine swap
 	
     subroutine dealloc(A, Anew)
