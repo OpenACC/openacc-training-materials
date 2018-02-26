@@ -1,26 +1,7 @@
 
 # OpenACC Loop Optimizations
 
-Lab written by Eric Wright
-
-This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is currently unavailable.
-
-You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
-
----
-Before we begin, let's verify [WebSockets](http://en.wikipedia.org/wiki/WebSocket) are working on your system.  To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.  If not, please consult the [Self-paced Lab Troubleshooting FAQ](https://developer.nvidia.com/self-paced-labs-faq#Troubleshooting) to debug the issue.
-
-
-```python
-print "The answer should be three: " + str(1+2)
-```
-
-Let's execute the cell below to display information about the GPUs running on the server.
-
-
-```python
-!nvidia-smi
-```
+This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.md).
 
 ---
 
@@ -30,7 +11,7 @@ Our goal for this lab is to use the OpenACC Loop clauses to opimize our Parallel
   
   
   
-![development_cycle.png](../files/images/development_cycle.png)
+![development_cycle.png](../images/development_cycle.png)
 
 This is the OpenACC 3-Step development cycle.
 
@@ -421,7 +402,7 @@ Then run the following script to see how the code runs.
 
 This is our last optimization, and arguably the most important one. In OpenACC, **Gang Worker Vector** is used to define additional levels of parallelism. Specifically for NVIDIA GPUs, gang worker vector will define the **organization** of our GPU threads. Each loop will have an optimal Gang Worker Vector implementation, and finding that correct implementation will often take a bit of thinking, and possibly some trial and error. So let's explain how Gang Worker Vector actually works.
 
-![gang_worker_vector.png](../../files/images/gang_worker_vector.png)
+![gang_worker_vector.png](../../images/gang_worker_vector.png)
 
 This image represents a single **gang**. When parallelizing our **for loops**, the **loop iterations** will be **broken up evenly** among a number of gangs. Each gang will contain a number of **threads**. These threads are organized into **blocks**. A **worker** is a row of threads. In the above graphic, there are 3 **workers**, which means that there are 3 rows of threads. The **vector** refers to how long each row is. So in the above graphic, the vector is 8, because each row is 8 threads long.
 
@@ -631,17 +612,3 @@ If you would like some additional lessons on using OpenACC, there is an Introduc
 
 [Introduction to Parallel Programming with OpenACC - Part 1](https://youtu.be/PxmvTsrCTZg)  
 
-## Post-Lab Summary
-
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
-
-
-```bash
-%%bash
-rm -f openacc_files.zip
-zip -r openacc_files.zip /notebooks/C/*
-```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)

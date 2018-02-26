@@ -1,50 +1,9 @@
 
-# Profiling OpenACC Code
+# OpenACC Loop Optimizations
 
-Lab written by Eric Wright
-
-The following timer counts down to a five minute warning before the lab instance shuts down.  You should get a pop up at the five minute warning reminding you to save your work!  If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
+This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/README.md).
 
 ---
-Before we begin, let's verify [WebSockets](http://en.wikipedia.org/wiki/WebSocket) are working on your system.  To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.  If not, please consult the [Self-paced Lab Troubleshooting FAQ](https://developer.nvidia.com/self-paced-labs-faq#Troubleshooting) to debug the issue.
-
-
-```python
-print "The answer should be three: " + str(1+2)
-```
-
-    The answer should be three: 3
-    
-
-Let's execute the cell below to display information about the GPUs running on the server.
-
-
-```python
-!nvidia-smi
-```
-
-    Tue Aug  8 22:01:14 2017       
-    +-----------------------------------------------------------------------------+
-    | NVIDIA-SMI 367.57                 Driver Version: 367.57                    |
-    |-------------------------------+----------------------+----------------------+
-    | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-    | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-    |===============================+======================+======================|
-    |   0  GRID K520           On   | 0000:00:03.0     Off |                  N/A |
-    | N/A   34C    P8    17W / 125W |      0MiB /  4036MiB |      0%      Default |
-    +-------------------------------+----------------------+----------------------+
-                                                                                   
-    +-----------------------------------------------------------------------------+
-    | Processes:                                                       GPU Memory |
-    |  GPU       PID  Type  Process name                               Usage      |
-    |=============================================================================|
-    |  No running processes found                                                 |
-    +-----------------------------------------------------------------------------+
-
-
-### Connecting to Your Lab Instance
-
-You are required to connect to the lab instance terminal - much like you would when working on a real system.  You can do this by using [this terminal](../terminals/1).
 
 ## Introduction
 
@@ -52,7 +11,7 @@ Our goal for this lab is to learn what exactly code profiling is, and how we can
   
   
   
-![development-cycle.png](../files/images/development-cycle.png)
+![development-cycle.png](../images/development-cycle.png)
 
 This is the OpenACC 3-Step development cycle.
 
@@ -118,7 +77,7 @@ The code simulates heat distribution across a 2-dimensional metal plate. In the 
 
 This is a visual representation of the plate before the simulation starts:  
   
-![plate1.png](../files/images/plate1.png)  
+![plate1.png](../images/plate1.png)  
   
 We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.c](../../view/C/laplace2d.c) file, we see a function called **initialize**. This function is what "heats" the top edge of the plate. 
   
@@ -138,7 +97,7 @@ void initialize(double *restrict A, double *restrict Anew, int m, int n)
 After the top edge is heated, the code will simulate that heat distributing across the length of the plate.  
 This is the plate after several iterations of our simulation:  
   
-![plate2.png](../files/images/plate2.png) 
+![plate2.png](../images/plate2.png) 
 
 That's the theory: simple heat distribution. However, we are more interested in how the code works. 
 
@@ -146,13 +105,13 @@ That's the theory: simple heat distribution. However, we are more interested in 
 
 The 2-dimensional plate is represented by a 2-dimensional array containing double values. These doubles represent temperature; 0.0 is room temperature, and 1.0 is our max temperature. The 2-dimensional plate has two states, one represents the current temperature, and one represents the simulated, updated temperature. These two states are represented by arrays **A** and **Anew** respectively. The following is a visual representation of these arrays, with the top edge "heated".
 
-![plate_sim2.png](../files/images/plate_sim2.png)  
+![plate_sim2.png](../images/plate_sim2.png)  
     
     
     
 The distinction between these two arrays is very important for our **calcNext** function. Our calcNext is essentially our "simulate" function. calcNext will look at the inner elements of A (meaning everything except for the edges of the plate) and update each elements temperature based on the temperature of its neighbors.  
 
-![plate_sim3.png](../files/images/plate_sim3.png)  
+![plate_sim3.png](../images/plate_sim3.png)  
 
 This is the **calcNext** function:
 ```
@@ -301,65 +260,3 @@ responsibility of identifying any reductions in the code. If you used
 `parallel loop`, try using `kernels` instead and observe the differences both in
 developer effort and performance.
 
-## Post-Lab Summary
-
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
-
-
-```python
-!cd c99 && pgc++ -ta=tesla:cc30,managed -Minfo=accel main.cpp && ./a.out
-```
-
-    dot(const vector &, const vector &):
-          6, include "vector_functions.h"
-              10, Generating implicit copyin(ycoefs[:n],xcoefs[:n])
-              12, Loop is parallelizable
-                  Accelerator kernel generated
-                  Generating Tesla code
-                  12, #pragma acc loop gang, vector(128) /* blockIdx.x threadIdx.x */
-                  13, Generating implicit reduction(+:sum)
-    waxpby(double, const vector &, double, const vector &, const vector &):
-          6, include "vector_functions.h"
-              22, Generating implicit copyout(wcoefs[:n])
-                  Generating implicit copyin(ycoefs[:n],xcoefs[:n])
-              24, Loop is parallelizable
-                  Accelerator kernel generated
-                  Generating Tesla code
-                  24, #pragma acc loop gang, vector(128) /* blockIdx.x threadIdx.x */
-    matvec(const matrix &, const vector &, const vector &):
-          8, include "matrix_functions.h"
-              12, Generating implicit copyout(ycoefs[:num_rows])
-                  Generating implicit copyin(xcoefs[:],row_offsets[:num_rows+1],Acoefs[:],cols[:])
-              14, Loop is parallelizable
-                  Accelerator kernel generated
-                  Generating Tesla code
-                   5, Vector barrier inserted due to potential dependence into a vector loop
-                  14, #pragma acc loop gang, worker(8) /* blockIdx.x threadIdx.y */
-                  19, #pragma acc loop vector(32) /* threadIdx.x */
-                      Vector barrier inserted due to potential dependence out of a vector loop
-                  23, Generating implicit reduction(+:sum)
-              19, Loop is parallelizable
-    Rows: 8120601, nnz: 218535025
-    Iteration: 0, Tolerance: 4.0067e+08
-    Iteration: 10, Tolerance: 1.8772e+07
-    Iteration: 20, Tolerance: 6.4359e+05
-    Iteration: 30, Tolerance: 2.3202e+04
-    Iteration: 40, Tolerance: 8.3565e+02
-    Iteration: 50, Tolerance: 3.0039e+01
-    Iteration: 60, Tolerance: 1.0764e+00
-    Iteration: 70, Tolerance: 3.8360e-02
-    Iteration: 80, Tolerance: 1.3515e-03
-    Iteration: 90, Tolerance: 4.6209e-05
-    Total Iterations: 100 Total Time: 51.182281s
-    
-
-
-```bash
-%%bash
-rm -f openacc_files.zip
-zip -r openacc_files.zip ~/c99/* ~/f90/*
-```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)

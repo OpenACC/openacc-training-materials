@@ -1,26 +1,7 @@
 
 # GPU Programming With OpenACC
 
-Lab written by Eric Wright
-
-This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/OpenACC+GPU+Fortran.ipynb).
-
-You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
-
----
-Before we begin, let's verify [WebSockets](http://en.wikipedia.org/wiki/WebSocket) are working on your system.  To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.  If not, please consult the [Self-paced Lab Troubleshooting FAQ](https://developer.nvidia.com/self-paced-labs-faq#Troubleshooting) to debug the issue.
-
-
-```python
-print "The answer should be three: " + str(1+2)
-```
-
-Let's execute the cell below to display information about the GPUs running on the server.
-
-
-```python
-!nvidia-smi
-```
+This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.md).
 
 ---
 
@@ -30,7 +11,7 @@ Our goal for this lab is to learn how to run our code on a GPU (Graphical Proces
   
   
   
-![development_cycle.png](../files/images/development_cycle.png)
+![development_cycle.png](../images/development_cycle.png)
 
 This is the OpenACC 3-Step development cycle.
 
@@ -85,13 +66,13 @@ If you would like to profile the multicore code, you may select <a href="/vnc" t
 
 GPUs were originally used to render computer graphics for video games. While they continue to dominate the video game hardware market, GPUs have also been adapted as a **high-throughput parallel hardware**. They excel at doing many things simultaneously.
 
-![cpu_with_gpu.png](../files/images/cpu_with_gpu.png)
+![cpu_with_gpu.png](../images/cpu_with_gpu.png)
 
 Similar to a multicore CPU, a GPU has multiple computational cores. A GPU will have many more cores, but these cores perform very badly when executing sequential serial code. Our goal when using a GPU is to only use it to offload our parallel code. All of our sequential code will continue to run on our CPU.
 
 GPUs are what is known as a SIMD architecture (SIMD stands for: single instruction, multiple data). This means that GPUs excel at taking a single computer instruction (such as a mathematical instruction, or a memory read/write) and applying that instruction to a large amount of data. Ultimately, this means that a GPU can execute thousands of operations at the same time. This function is very similar to our multicore CPU architecture, except that with a GPU, we have a many more cores at our disposal.
 
-![cpu_and_gpu_diagram.png](../files/images/cpu_and_gpu_diagram.png)
+![cpu_and_gpu_diagram.png](../images/cpu_and_gpu_diagram.png)
 
 This diagram represents a machine that contains a CPU and a GPU. We can see that the CPU and GPU are two complete seperate devices, connected via an I/O Bus. This bus is traditionally a PCI-e bus, however, NVLink is a newer, faster alternative. These two devices also have seperate memory. This means that during the execution of our program, some amount of data will be transferred between the CPU and the GPU.
 
@@ -154,7 +135,7 @@ At this point, we have two seperate copies of **A**. The CPU copy is full of 0's
 
 This image offers another step-by-step example of using the copy clause.
 
-![copy_step_by_step](../files/images/copy_step_by_step.png)
+![copy_step_by_step](../images/copy_step_by_step.png)
 
 We are also able to copy multiple arrays at once by using the following syntax.
 
@@ -240,42 +221,42 @@ To profile our code, select <a href="/vnc" target="_blank">this link.</a> This w
 
 To open a new profiling session, select File > New Session. You will be greeted with this window.
 
-![pgprof1.PNG](../files/images/pgprof1.PNG)
+![pgprof1.PNG](../images/pgprof1.PNG)
 
 Where it says "File: Enter executable file [required]", select Browse. Select File System > notebooks, then press OK.
 
-![pgprof2.PNG](../files/images/pgprof2.PNG)
+![pgprof2.PNG](../images/pgprof2.PNG)
 
 Open the C directory, and select the "laplace_data_clauses" executable.
 
-![pgprof3.PNG](../files/images/pgprof3.PNG)
+![pgprof3.PNG](../images/pgprof3.PNG)
 
 Then select OK. Your screen should look similar to this:
 
-![pgprof4.PNG](../files/images/pgprof4.PNG)
+![pgprof4.PNG](../images/pgprof4.PNG)
 
 As stated previously, if we run our program with the default 4096x4096 array, the program will take several minutes to run. I recommend that you reduce the size. Type "1024 1024" into cell labeled "Arguments", as pictured below.
 
-![pgprof5.PNG](../files/images/pgprof5.PNG)
+![pgprof5.PNG](../images/pgprof5.PNG)
 
 PGPROF will now profile your application. You will know when it is finished when you see the application output in the console window.
 
-![pgprof6.PNG](../files/images/pgprof6.PNG)
+![pgprof6.PNG](../images/pgprof6.PNG)
 
 This is the view that you should see once PGPROF is done profiling your program.
 
-![pgprof7.PNG](../files/images/pgprof7.PNG)
+![pgprof7.PNG](../images/pgprof7.PNG)
 
 We can see that our "timeline" has a lot going on. Feel free to explore the profile at this point. It will help to zoom in, so that you can better see the information.
 
-![pgprof8.PNG](../files/images/pgprof8.PNG)
+![pgprof8.PNG](../images/pgprof8.PNG)
 
 Upon zooming in, we get a much better idea of what is happening inside of our program. I have zoomed in on a single iteration of our while loop. We can see that both **calcNext** and **swap** is called. We can also see that there is a lot of space between them. It may be obvious now why our program is performing so poorly. The amount of time that our program is transferring data (as seen in the MemCpy timelines) is far greater than the time it takes running our computational functions **calcNext** and **swap**. In order to improve our performance, we need to minimize these data transfers.
 
 ---
 ## Managed Memory
 
-![managed_memory.png](../files/images/managed_memory.png)  
+![managed_memory.png](../images/managed_memory.png)  
 
 As with many things in OpenACC, we have the option to allow the compiler to handle memory management. We will be able to achieve better performance by managing the memory ourselves, however, allowing the compiler to use managed memory is very simple, and will achieve much better performance than our naive solution from earlier. We do not need to make any changes to our code to get managed memory working. Simply run the following script. Keep in mind that unlike earlier, we are now running our code with the full sized 4096x4096 array.
 
@@ -294,11 +275,11 @@ As long as the GPU supports managed memory (see [Optional: Compiling GPU Code](#
 
 Our program is doing a lot better. Let's re-profile it and see exactly why it improved. If you closed the noVNC window, you can reopen it by <a href="/vnc" target="_blank">this link.</a> To open a new profiling session, select File > New Session. Follow the steps from earlier, except select the "laplace_managed" executable. You may also emit the "Arguments". Once PGPROF is finished profiling our application, you should see the following view:  
 
-![pgprof_managed1.PNG](../files/images/pgprof_managed1.PNG)
+![pgprof_managed1.PNG](../images/pgprof_managed1.PNG)
 
 Feel free to explore the profile at this point. Then, when you're ready, let's zoom in.
 
-![pgprof_managed3.PNG](../files/images/pgprof_managed3.PNG)
+![pgprof_managed3.PNG](../images/pgprof_managed3.PNG)
 
 We can see that our compute regions (our **calcNext** and **swap** function calls) are much closer together now. There is significantly less data transfer happening between them. By using managed memory, the compiler was able to avoid the need to transfer data back and forth between the CPU and the GPU. In the next module, we will learn how to do this manually (which will boost the performance by a little bit), but for now, it is sufficient to use managed memory.
 
@@ -316,17 +297,3 @@ We have learned how to run our code on a GPU using managed memory. We also exper
 [Introduction to Parallel Programming with OpenACC - Part 3](https://youtu.be/Pcc3O6h-YPE)  
 [Introduction to Parallel Programming with OpenACC - Part 4](https://youtu.be/atXtVCHq8iw)
 
-## Post-Lab Summary
-
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
-
-
-```bash
-%%bash
-rm -f openacc_files.zip
-zip -r openacc_files.zip /notebooks/C/*
-```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)
