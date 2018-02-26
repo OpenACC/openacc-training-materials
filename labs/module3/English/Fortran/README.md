@@ -1,26 +1,7 @@
 
 # Profiling OpenACC Code
 
-Lab written by Eric Wright
-
-This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/OpenACC+Directives+C.ipynb).
-
-The following timer counts down to a five minute warning before the lab instance shuts down.  You should get a pop up at the five minute warning reminding you to save your work!  If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later. This is the Fortran version of this lab, for the C version [click here](../C/OpenACC%2BDirectives%2BC.ipynb).
-
----
-Before we begin, let's verify [WebSockets](http://en.wikipedia.org/wiki/WebSocket) are working on your system.  To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.  If not, please consult the [Self-paced Lab Troubleshooting FAQ](https://developer.nvidia.com/self-paced-labs-faq#Troubleshooting) to debug the issue.
-
-
-```python
-print "The answer should be three: " + str(1+2)
-```
-
-Let's execute the cell below to display information about the GPUs running on the server.
-
-
-```python
-!nvidia-smi
-```
+This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/README.md).
 
 ---
 
@@ -30,7 +11,7 @@ Our goal for this lab is to learn what exactly code profiling is, and how we can
   
   
   
-![development_cycle.png](../files/images/development_cycle.png)
+![development_cycle.png](../images/development_cycle.png)
 
 This is the OpenACC 3-Step development cycle.
 
@@ -105,9 +86,9 @@ enddo
 
 !acc **parallel loop** will mark the next loop for parallelization. It is extremely important to include the **loop**, otherwise you will not be parallelizing the loop properly. The parallel directive tells the compiler to "redundantly parallelize" the code. The **loop** directive specifically tells the compiler that we want the loop parallelized. Let's look at an example of why the loop directive is so important.
 
-![parallel1](../files/images/parallel1f.png)
-![parallel2](../files/images/parallel2f.png)
-![parallel3](../files/images/parallel3f.png)
+![parallel1](../images/parallel1f.png)
+![parallel2](../images/parallel2f.png)
+![parallel3](../images/parallel3f.png)
 
 We are soon going to move onto the next directive (the kernels directive) which also allows us to parallelize our code. We will also mark the differences between this two directives. With that being said, the following information is completely unique to the parallel directive:
 
@@ -172,8 +153,8 @@ enddo
 
 By using the kernels directive, we can parallelize more than one loop (as many loops as we want, actually.) We are also able to include sequential code between the loops, without needing to include multiple directives. Similar to before, let's look at a visual example of how the kernels directive works.
 
-![kernels1](../files/images/kernels1f.png)
-![kernels2](../files/images/kernels2f.png)
+![kernels1](../images/kernels1f.png)
+![kernels2](../images/kernels2f.png)
 
 Before moving onto our last directive (the loop directive), let's recap what makes the parallel and kernels directive so functionally different.
 
@@ -353,17 +334,3 @@ There are a few optimizations that we could make to our code at this point, but,
 !pgfortran -fast -ta=tesla:cc30,managed -Minfo=accel -o laplace_gpu laplace2d.f90 jacobi.f90 && ./laplace_gpu
 ```
 
-## Post-Lab Summary
-
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
-
-
-```bash
-%%bash
-rm -f openacc_files.zip
-zip -r openacc_files.zip /notebooks/Fortran/*
-```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)

@@ -1,26 +1,7 @@
 
 # Data Management with OpenACC
 
-Lab written by Eric Wright
-
 This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is not currently available.
-
-You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
-
----
-Before we begin, let's verify [WebSockets](http://en.wikipedia.org/wiki/WebSocket) are working on your system.  To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.  If not, please consult the [Self-paced Lab Troubleshooting FAQ](https://developer.nvidia.com/self-paced-labs-faq#Troubleshooting) to debug the issue.
-
-
-```python
-print "The answer should be three: " + str(1+2)
-```
-
-Let's execute the cell below to display information about the GPUs running on the server.
-
-
-```python
-!nvidia-smi
-```
 
 ---
 
@@ -30,7 +11,7 @@ Our goal for this lab is to use the OpenACC Data Directives to properly manage o
   
   
   
-![development_cycle.png](../files/images/development_cycle.png)
+![development_cycle.png](../images/development_cycle.png)
 
 This is the OpenACC 3-Step development cycle.
 
@@ -242,7 +223,7 @@ If you would like to profile the code, you may select <a href="/vnc" target="_bl
 
 Take a moment to explore the profiler, and when you're ready, let's zoom in on the very beginning of our profile.
 
-![structured_pgprof1.PNG](../../files/images/structured_pgprof1.PNG)
+![structured_pgprof1.PNG](../../images/structured_pgprof1.PNG)
 
 We can see that we have uninterupted computation, and all of our data movement happens at the beginning of the program. This is ideal, because we are avoiding data transers in the middle of our computation.
 
@@ -321,7 +302,7 @@ If you would like to profile the code, you may select <a href="/vnc" target="_bl
 
 Take a moment to explore the profiler, and when you're ready, let's zoom in on the very beginning of our profile.
 
-![unstructured_pgprof1.PNG](../../files/images/unstructured_pgprof1.PNG)
+![unstructured_pgprof1.PNG](../../images/unstructured_pgprof1.PNG)
 
 We can see that we have uninterupted computation, and all of our data movement happens at the beginning of the program. This is ideal, because we are avoiding data transers in the middle of our computation. If you also profiled the structured version of the code, you will notice that the profiles are nearly identical. This isn't surprising, since the structured and unstructured approach work very similarly at the hardware level. However, structured data regions may be easier in simple codes, whereas some codes might flow better when using an unstructured approach. It is up to the programmer to decide which to use.
 
@@ -431,17 +412,3 @@ If you would like some additional lessons on using OpenACC, there is an Introduc
 
 [Introduction to Parallel Programming with OpenACC - Part 5](https://youtu.be/0zTX7-CPvV8)  
 
-## Post-Lab Summary
-
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
-
-
-```bash
-%%bash
-rm -f openacc_files.zip
-zip -r openacc_files.zip /notebooks/C/*
-```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)

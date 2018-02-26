@@ -1,8 +1,6 @@
 
 # Profiling OpenACC Code
 
-Lab written by Eric Wright
-
 This lab is intended for C/C++ programmers. If you prefer to use Fortran, click [this link.](../Fortran/README.md)
 
 ---
