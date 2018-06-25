@@ -1,7 +1,24 @@
 
 # Profiling OpenACC Code
 
-This lab is intended for C/C++ programmers. If you prefer to use Fortran, click [this link.](../Fortran/README.md)
+This lab is intended for C/C++ programmers. If you prefer to use Fortran, click [this link.](../Fortran/README.ipynb)
+
+You will receive a warning five minutes before the lab instance shuts down. At this point, make sure to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
+
+---
+Before we begin, let's verify [WebSockets](http://en.wikipedia.org/wiki/WebSocket) are working on your system.  To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.  If not, please consult the [Self-paced Lab Troubleshooting FAQ](https://developer.nvidia.com/self-paced-labs-faq#Troubleshooting) to debug the issue.
+
+
+```python
+print "The answer should be three: " + str(1+2)
+```
+
+Let's execute the cell below to display information about the GPUs running on the server by running the `pgaccelinfo` command, which ships with the PGI compiler that we will be using.
+
+
+```python
+!pgaccelinfo
+```
 
 ---
 ## Introduction
@@ -10,7 +27,7 @@ Our goal for this lab is to learn what exactly code profiling is, and how we can
   
   
   
-![development-cycle.png](../images/development-cycle.png)
+![development-cycle.png](../files/images/development-cycle.png)
 
 This is the OpenACC 3-Step development cycle.
 
@@ -52,8 +69,8 @@ The output from our program will make more sense as we analyze the code. The mos
 
 Now that we know how long the code took to run and what the code's output looks like, we should be able to view the code with a decent idea of what is happening. The code is contained within two files, which you may open and view.
 
-[jacobi.c](../../view/C/jacobi.c)  
-[laplace2d.c](../../view/C/laplace2d.c)  
+[jacobi.c](../../../edit/01-Profiling-OpenACC-Code/C/jacobi.c)  
+[laplace2d.c](../../../edit/01-Profiling-OpenACC-Code/C/laplace2d.c)  
   
 You may read through these two files on your own, but we will also highlight the most important parts below in the "Code Breakdown".
 
@@ -63,9 +80,9 @@ The code simulates heat distribution across a 2-dimensional metal plate. In the 
 
 This is a visual representation of the plate before the simulation starts:  
   
-![plate1.png](../images/plate1.png)  
+![plate1.png](../files/images/plate1.png)  
   
-We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.c](../../view/C/laplace2d.c) file, we see a function called **`initialize`**. This function is what "heats" the top edge of the plate. 
+We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.c](../../../edit/01-Profiling-OpenACC-Code/C/laplace2d.c) file, we see a function called **`initialize`**. This function is what "heats" the top edge of the plate. 
   
 ```
 void initialize(double *restrict A, double *restrict Anew, int m, int n)  
@@ -84,7 +101,7 @@ After the top edge is heated, the code will simulate the heat distributing acros
 
 This is the plate after several iterations of our simulation:  
   
-![plate2.png](../images/plate2.png) 
+![plate2.png](../files/images/plate2.png) 
 
 That's the theory: simple heat distribution. However, we are more interested in how the code works. 
 
@@ -92,11 +109,11 @@ That's the theory: simple heat distribution. However, we are more interested in 
 
 The 2-dimensional plate is represented by a 2-dimensional array containing double-precision floating point values. These doubles represent temperature; 0.0 is room temperature, and 1.0 is our max temperature. The 2-dimensional plate has two states, one represents the current temperature, and one represents the expected temperature values at the next step in our simulation. These two states are represented by arrays **`A`** and **`Anew`** respectively. The following is a visual representation of these arrays, with the top edge "heated".
 
-![plate_sim2.png](../images/plate_sim2.png)  
+![plate_sim2.png](../files/images/plate_sim2.png)  
     
 Simulating this state in two arrays is very important for our **`calcNext`** function. Our calcNext is essentially our "simulate" function. calcNext will look at the inner elements of A (meaning everything except for the edges of the plate) and update each elements temperature based on the temperature of its neighbors.  If we attempted to calculate in-place (using only **`A`**), then each element would calculate its new temperature based on the updated temperature of previous elements. This data dependency not only prevents parallelizing the code, but would also result in incorrect results when run in serial. By calculating into the temporary array **`Anew`** we ensure that an entire step of our simulation has completed before updating the **`A`** array.
 
-![plate_sim3.png](../images/plate_sim3.png)  
+![plate_sim3.png](../files/images/plate_sim3.png)  
 
 Below is the **`calcNext`** function:
 ```
@@ -141,27 +158,27 @@ By now you should have a good idea of what the code is doing. If not, go spend a
 
 We will start by profiling the laplace executable that we created earlier. To do this, Select File > New Session. After doing this you should see a pop-up like the one in the picture below.
 
-![pgprof1.png](../images/pgprof1.PNG) 
+![pgprof1.png](../files/images/pgprof1.png) 
 
 Then where is says "File: Enter Executable File [required]", select "Browse". Then select File Systems > Notebooks > C.
 
-![pgprof2.png](../images/pgprof2.PNG) 
+![pgprof2.png](../files/images/pgprof2.PNG) 
 
 Select our "laplace" executable file. 
 
-![pgprof3.png](../images/pgprof3.PNG)
+![pgprof3.png](../files/images/pgprof3.PNG)
 
 Then select "Next", followed by "Finished". 
 
-![pgprof4.png](../images/pgprof4.PNG) 
+![pgprof4.png](../files/images/pgprof4.PNG) 
 
 Our Laplace code will run again. We will know when it's finished running (about a minute) when we see our output in the Console Tab. 
 
-![pgprof5.png](../images/pgprof5.PNG) 
+![pgprof5.png](../files/images/pgprof5.PNG) 
 
 Since our application is run entirely on the CPU, select the CPU Details Tab towards the bottom of the window. At the top right of the tab, their are three options. These options are different ways to organize the CPU Details. I have selected "Hierarchy".  
 
-![pgprof6.png](../images/pgprof6.PNG) 
+![pgprof6.png](../files/images/pgprof6.PNG) 
 
 Within the CPU Details Tab we can see the time that each individual portion of our code took to run. This information is important because it allows us to make educated decisions about which parts of our code to optimize first. To get the bang for our buck, we want to focus on the most time-consuming parts of the code. Next, we will compiler, run, and profile a parallel version of the code, and analyze the differences.
 
@@ -213,11 +230,11 @@ Using the same PGProf window as before, start a new session by selecting File > 
 
 This is the view that we are greeted with when profiling a multicore application.
 
-![pgprof_parallel1.PNG](../images/pgprof_parallel1.PNG)
+![pgprof_parallel1.PNG](../files/images/pgprof_parallel1.PNG)
 
 The first difference we see is the blue "timeline." This timeline represents when our program is executing something on the parallel hardware. This means that every call to **`calcNext`** and **`swap`** should be represented by a blue bar. Since we are running on a multicore CPU, all of our information will be found in the CPU Details Tab.
 
-![pgprof_parallel2.PNG](../images/pgprof_parallel2.PNG)
+![pgprof_parallel2.PNG](../files/images/pgprof_parallel2.PNG)
 
 We can see that our CPU Details is much more complicated than with the sequential program. We will not cover everything that is happening within these CPU details (though, it is all great information if you want to do some external research); for the most part, these additional functions are handling the communication between the CPU cores.
 
@@ -225,8 +242,8 @@ Among the new CPU details, we also see our **`calcNext`** and **`c_mcopy8`** fun
 
 A thread is simply a computational unit; something that can run computer instructions. Specifically, our CPU is utilizing 4 threads, since it has 4 CPU cores on which to run. At the top-left-hand corner of the CPU Details tab, you will see a dropdown box labeled **TOTAL**. This means that currently, the CPU Details is combining information about all of our threads. This is not a fair representation, because these threads can run independently of each other, meaning they will run simultaneously. Let's look at a single thread, rather than the TOTAL view.  
 
-![pgprof_parallel3.PNG](../images/pgprof_parallel3.PNG)
-![pgprof_parallel4.PNG](../images/pgprof_parallel4.PNG)
+![pgprof_parallel3.PNG](../files/images/pgprof_parallel3.PNG)
+![pgprof_parallel4.PNG](../files/images/pgprof_parallel4.PNG)
 
 Looking at a single thread, we can see that **`calcNext`** and **`c_mcopy8`** are taking significantly less time to run. When I ran the code, my **Thread 0** is reporting to have spent about 11 seconds running **`calcNext`**. This is significantly faster than earlier. However, when looking at the **TOTAL** view, it was reporting that all of the threads combined were spending 45 seconds running calcNext. This means that each thread spent around 11 second running calcNext, and once you added them all together, it totaled to be 45 seconds. This **TOTAL** view does not take into consideration that all of these threads are running **simultaneously**. So, when you add up all of their times together, it is about 45 seconds. But since they ran at the same time, the realistic time would be around 11 seconds. Notice that the runtime reported at the end of the simulation is more similar to the time of an individual thread than it is the time displayed in the **TOTAL** view.
 
@@ -256,3 +273,20 @@ Run this script to compile/run our code on a GPU.
 Now, within PGPROF, select File > New Session. Follow the same steps as earlier, except select the **`laplace_gpu`** executable. If you closed the noVNC window, you can reopen it by <a href="/vnc" target="_blank">clicking this link</a>.
 
 Happy profiling!
+
+---
+
+## Post-Lab Summary
+
+If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
+
+You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
+
+
+```bash
+%%bash
+rm -f openacc_files.zip
+zip -r openacc_files.zip *
+```
+
+**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)
