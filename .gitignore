@@ -5,4 +5,6 @@ laplace_gpu
 core
 *~
 .*.swp
-
+desktop.ini
+__MACOSX
+.DS_Store
