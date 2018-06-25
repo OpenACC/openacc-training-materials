@@ -8,8 +8,8 @@ and Fortran.
 
 Please see the following files to begin the lab:
 
-* [C/C++](C/README.md)
-* [Fortran](Fortran/README.md)
+* [C/C++](English/C/README.md)
+* [Fortran](English/Fortran/README.md)
 
 Additional Resources
 --------------------
