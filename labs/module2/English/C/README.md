@@ -1,7 +1,7 @@
 
 # Profiling OpenACC Code
 
-This lab is intended for C/C++ programmers. If you prefer to use Fortran, click [this link.](../Fortran/README.ipynb)
+This lab is intended for C/C++ programmers. If you prefer to use Fortran, click [this link.](../Fortran/README.md)
 
 You will receive a warning five minutes before the lab instance shuts down. At this point, make sure to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
 
