@@ -6,6 +6,11 @@ The purpose of this lab is to introduce students to application profiling using
 the PGProf profiler. Lab instructions and source code is available for C/C++
 and Fortran.
 
+Please see the following files to begin the lab:
+
+* [C/C++](C/README.md)
+* [Fortran](Fortran/README.md)
+
 Additional Resources
 --------------------
 * [Associated Slides](#)
