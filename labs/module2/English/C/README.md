@@ -69,8 +69,8 @@ The output from our program will make more sense as we analyze the code. The mos
 
 Now that we know how long the code took to run and what the code's output looks like, we should be able to view the code with a decent idea of what is happening. The code is contained within two files, which you may open and view.
 
-[jacobi.c](../../../edit/01-Profiling-OpenACC-Code/C/jacobi.c)  
-[laplace2d.c](../../../edit/01-Profiling-OpenACC-Code/C/laplace2d.c)  
+[jacobi.c](jacobi.c)  
+[laplace2d.c](laplace2d.c)  
   
 You may read through these two files on your own, but we will also highlight the most important parts below in the "Code Breakdown".
 
@@ -205,7 +205,7 @@ swap:
 In a future lab you will run parallelize the code to run on a multicore CPU. This is the simplest starting point, since it doesn't require us to think about copying our data between different memories. So that you can experience profiling with PGProf on a multicore CPU, a parallel version of the code has been provided. You will be able to parallelize the code yourself in the next lab.
 
 
-```python
+```sh
 !pgcc -fast -ta=multicore -Minfo=accel -o laplace_parallel ./solutions/parallel/jacobi.c ./solutions/parallel/laplace2d.c && ./laplace_parallel
 ```
 
@@ -266,7 +266,7 @@ For right now, we are focusing on multicore CPUs. Eventually, we will transition
 Run this script to compile/run our code on a GPU.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30 -Minfo=accel -o laplace_gpu ./solutions/gpu/jacobi.c ./solutions/gpu/laplace2d.c && ./laplace_gpu
 ```
 
