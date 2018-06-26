@@ -1,7 +1,17 @@
 
-# Profiling OpenACC Code
+# OpenACC Directives
 
-This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/README.md).
+This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/OpenACC+Directives+C.md).
+
+The following timer counts down to a five minute warning before the lab instance shuts down.  You should get a pop up at the five minute warning reminding you to save your work!  If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later. This is the Fortran version of this lab, for the C version [click here](../C/README.md).
+
+---
+Let's execute the cell below to display information about the GPUs running on the server. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
+
+
+```sh
+!pgaccelinfo
+```
 
 ---
 
@@ -28,7 +38,7 @@ We are currently tackling the **analyze** step. We will use PGI's code profiler 
 Our first step to analyzing this code is to run it. We need to record the results of our program before making any changes so that we can compare them to the results from the parallel code later on. It is also important to record the time that the program takes to run, as this will be our primary indicator to whether or not our parallelization is improving performance.
 
 
-```python
+```sh
 !pgfortran -fast -o laplace laplace2d.f90 jacobi.f90 && echo "Compilation Successful!" && ./laplace
 ```
 
@@ -36,8 +46,8 @@ Our first step to analyzing this code is to run it. We need to record the result
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.f90](../../view/Fortran/jacobi.f90)  
-[laplace2d.f90](../../view/Fortran/laplace2d.f90)  
+[jacobi.f90](jacobi.f90)  
+[laplace2d.f90](laplace2d.f90)  
 
 ### Optional: Profile the Code
 
@@ -53,7 +63,7 @@ Using OpenACC directives will allow us to parallelize our code without needing t
 
 **!acc &lt;directive> &lt;clauses>**
 
-**!acc** in Fortran is what's known as a "compiler hint." These are very similar to programmer comments, however, the compiler will actually read our pragmas. Pragmas are a way for the programmer to "guide" the compiler, without running the chance damaging the code. If the compiler does not understand the pragma, it can ignore it, rather than throw a syntax error.
+**!acc** in Fortran is what's known as a "compiler hint." These are very similar to programmer comments, since the line begins with a comment statement "!". After the comment is "acc". OpenACC compliant compilers with appropriate command line options can interpret this as an OpenACC directive that "guide" the compiler, without running the chance of damaging the code. If the compiler does not understand "!acc" it can ignore it, rather than throw a syntax error because it's just a comment.
 
 **directive**s are commands in OpenACC that will tell the compiler to do some action. For now, we will only use directives that allow the compiler to parallelize our code.
 
@@ -68,19 +78,20 @@ There are three directives we will cover in this lab: parallel, kernels, and loo
 The parallel directive may be the most straight-forward of the directives. It will mark a region of the code for parallelization (this usually only includes parallelizing a single for loop.) Let's take a look:
 
 ```
-!acc parallel loop
-do i=1,N
-    < loop code >
-enddo
+    !acc parallel loop
+    do i=1,N
+        < loop code >
+    enddo
 ```
 
-We may also define a "parallel region". The parallel region may have multiple loops (though this is often not recommended!) The parallel region is everything contained within the outer-most curly braces.
+We may also define a "parallel region". The parallel region may have multiple loops (though this is often not recommended!) The parallel region is everything contained within the outer-most loop.
 
 ```
 !acc parallel
-do i=1,N
-    < loop code >
-enddo
+    !acc loop
+    do i=1,N
+        < loop code >
+    enddo
 
 ```
 
@@ -100,14 +111,15 @@ We will soon see how the kernels directive is the exact opposite in all of these
 
 It is recommended that you learn all three of the directives prior to altering the laplace code. However, if you wish to try out the parallel directive *now*, then you may use the following links to edit the laplace code.
 
-[jacobi.f90](../../edit/Fortran/jacobi.f90)   
-[laplace2d.f90](../../edit/Fortran/laplace2d.f90)  
+[jacobi.f90](../../../edit/02-OpenACC-Directives/Fortran/jacobi.f90)   
+[laplace2d.f90](../../../edit/02-OpenACC-Directives/Fortran/laplace2d.f90)  
+
 (be sure to save the changes you make by pressing ctrl+s)
 
 You may run your code by running the following script:
 
 
-```python
+```sh
 !pgfortran -fast -ta=multicore -Minfo=accel -o laplace_parallel laplace2d.f90 jacobi.f90 && ./laplace_parallel
 ```
 
@@ -121,9 +133,12 @@ The kernels directive allows the programmer to step back, and rely solely on the
 do i=1,N
     < loop code >
 enddo
+!acc end kernels
 ```
 
 Just like in the parallel directive example, we are parallelizing a single loop. Recall that when using the parallel directive, it must always be paired with the loop directive, otherwise the code will be improperly parallelized. The kernels directive does not follow the same rule, and in some compilers, adding the loop directive may limit the compilers ability to optimize the code.
+
+In this case you also need to include the statement "!acc end kernels" so the compiler knows the "scope" of the directive.
 
 As said previously, the kernels directive is the exact opposite of the parallel directive. This means that the compiler is making a lot of assumptions, and may even override the programmers decision to parallelize code. Also, by default, the compiler will attempt to optimize the loop. The compiler is generally pretty good at optimizing loops, and sometimes may be able to optimize the loop in a way that the programmer cannot describe. However, usually, the programmer will be able to achieve better performance by optimizing the loop themself.
 
@@ -134,9 +149,10 @@ If you run into a situation where the compiler refuses to parallelize a loop, yo
 do i=1,N
     < loop code >
 enddo
+!acc end kernels
 ```
 
-One of the largest advantages of the kernels directive is its ability to parallelize many loops at once. For example, in the following code segment, we are able to effectively parallelize two loops at once by utilizing a kernels region (similar to a parallel region, that we saw earlier.)
+One of the largest advantages of the kernels directive is its ability to parallelize many loops at once. For example, in the following code segment, we are able to effectively parallelize two loops at once by utilizing a kernels region (similar to a parallel region, that we saw earlier.) This is done by putting the statement "!acc end kernels" at the end of the directive region.
 
 ```
 !acc kernels
@@ -149,6 +165,7 @@ enddo
 do j=1,M
    < loop code >
 enddo
+!acc end kernels
 ```
 
 By using the kernels directive, we can parallelize more than one loop (as many loops as we want, actually.) We are also able to include sequential code between the loops, without needing to include multiple directives. Similar to before, let's look at a visual example of how the kernels directive works.
@@ -167,14 +184,15 @@ Before moving onto our last directive (the loop directive), let's recap what mak
 
 It is recommended that you learn all three of the directives prior to altering the laplace code. However, if you wish to try out the kernels directive *now*, then you may use the following links to edit the laplace code. Pay close attention to the compiler feedback, and be prepared to add the *independent* clause to your loops.
 
-[jacobi.f90](../../edit/Fortran/jacobi.f90)   
-[laplace2d.f90](../../edit/Fortran/laplace2d.f90)  
+[jacobi.f90](../../../edit/02-OpenACC-Directives/Fortran/jacobi.f90)   
+[laplace2d.f90](../../../edit/02-OpenACC-Directives/Fortran/laplace2d.f90)  
+
 (be sure to save the changes you make by pressing ctrl+s)
 
 You may run your code by running the following script:
 
 
-```python
+```sh
 !pgfortran -fast -ta=multicore -Minfo=accel -o laplace_parallel laplace2d.f90 jacobi.f90 && ./laplace_parallel
 ```
 
@@ -203,6 +221,7 @@ or
 do i=1,N
    < loop code >
 enddo
+!acc end kernels
 ```
 
 When using the **parallel** directive, you must include the loop directive for the code to function properly. When using the **kernels** directive, the loop directive is implied, and does not need to be included.
@@ -230,6 +249,7 @@ do i=1,N
         < loop code >
     enddo
 enddo
+!acc end kernels
 ```
 
 Notice that just like before, we do not need to include the loop directive.
@@ -238,8 +258,10 @@ Notice that just like before, we do not need to include the loop directive.
 ## Parallelizing Our Laplace Code
 
 Using your knowledge about the parallel, kernels, and loop directive, add OpenACC directives to our laplace code and parallelize it. You may edit the code by selecting the following links:  
-[jacobi.f90](../../edit/Fortran/jacobi.f90)   
-[laplace2d.f90](../../edit/Fortran/laplace2d.f90)  
+
+[jacobi.f90](../../../edit/02-OpenACC-Directives/Fortran/jacobi.f90)   
+[laplace2d.f90](../../../edit/02-OpenACC-Directives/Fortran/laplace2d.f90)  
+
 (be sure to save the changes you make by pressing ctrl+s)
 
 
@@ -247,7 +269,7 @@ Using your knowledge about the parallel, kernels, and loop directive, add OpenAC
 To compile and run your parallel code on a multicore CPU, run the following script:
 
 
-```python
+```sh
 !pgfortran -fast -ta=multicore -Minfo=accel -o laplace_parallel laplace2d.f90 jacobi.f90 && ./laplace_parallel
 ```
 
@@ -256,7 +278,7 @@ To compile and run your parallel code on a multicore CPU, run the following scri
 If at any point you feel that you have made a mistake, and would like to reset the code to how it was originally, you may run the following script:
 
 
-```python
+```sh
 !cp ./solutions/sequential/jacobi.f90 ./jacobi.f90 && cp ./solutions/sequential/laplace2d.f90 ./laplace2d.f90 && echo "Reset Complete"
 ```
 
@@ -265,7 +287,7 @@ If at any point you feel that you have made a mistake, and would like to reset t
 If at any point you would like to re-run the sequential code to check results/performance, you may run the following script:
 
 
-```python
+```sh
 !cd solutions/sequential && pgfortran -fast -o laplace_seq laplace2d.f90 jacobi.f90 && ./laplace_seq
 ```
 
@@ -274,7 +296,7 @@ If at any point you would like to re-run the sequential code to check results/pe
 If you would like to view information about the CPU we are running on, you may run the following script:
 
 
-```python
+```sh
 !pgcpuid
 ```
 
@@ -299,19 +321,19 @@ If you would like to profile your multicore code with PGPROF, click <a href="/vn
 If you would like to check your results, run the following script.
 
 
-```python
+```sh
 !cd solutions/multicore && pgfortran -fast -ta=multicore -Minfo=accel -o laplace_parallel laplace2d.f90 jacobi.f90 && ./laplace_parallel
 ```
 
 If you would like to view the solution codes, you may use the following links.
 
 **Using the Parallel Directive**  
-[jacobi.f90](../../view/Fortran/solutions/multicore/jacobi.f90)  
-[laplace2d.f90](../../view/Fortran/solutions/multicore/laplace2d.f90)  
+[jacobi.f90](../../../edit/02-OpenACC-Directives/Fortran/solutions/multicore/jacobi.f90)  
+[laplace2d.f90](../../../edit/02-OpenACC-Directives/Fortran/solutions/multicore/laplace2d.f90)  
 
 **Using the Kernels Directive**  
-[jacobi.f90](../../view/Fortran/solutions/multicore/kernels/jacobi.f90)  
-[laplace2d.f90](../../view/Fortran/solutions/multicore/kernels/laplace2d.f90)  
+[jacobi.f90](../../../edit/02-OpenACC-Directives/Fortran/solutions/multicore/kernels/jacobi.f90)  
+[laplace2d.f90](../../../edit/02-OpenACC-Directives/Fortran/solutions/multicore/kernels/laplace2d.f90)  
 
 We are able to parallelize our code for a handful of different hardware by using either the **parallel** or **kernels** directive. We are also able to define additional levels of parallelism by using the **loop** directive inside the parallel/kernels directive. You may also use these directives to parallelize nested loops. 
 
@@ -330,7 +352,7 @@ There are a few optimizations that we could make to our code at this point, but,
 3. As discussed earlier, a multicore accelerator is only able to take advantage of one level of parallelism. However, a GPU can take advantage of more. Make sure to use the skills you learned in the **Loop Directive** section of the lab, and parallelize the multi-dimensional loops in our code. Then run the script below to run the code on a GPU. Compare the results (including compiler feedback) to our multicore implementation.
 
 
-```python
+```sh
 !pgfortran -fast -ta=tesla:cc30,managed -Minfo=accel -o laplace_gpu laplace2d.f90 jacobi.f90 && ./laplace_gpu
 ```
 
