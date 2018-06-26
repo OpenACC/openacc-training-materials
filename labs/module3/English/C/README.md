@@ -1,7 +1,18 @@
 
-# Profiling OpenACC Code
+# OpenACC Directives
 
-This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.md.ipynb).
+This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README
+.md).
+
+You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
+
+---
+Let's execute the cell below to display information about the GPUs running on the server. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
+
+
+```sh
+!pgaccelinfo
+```
 
 ---
 
@@ -30,7 +41,7 @@ We are currently tackling the **parallelize** step. We will include OpenACC dire
 Before we attempt to parallelize our code, let's run it sequentially, and see how it's performing. This will generate an executable called "laplace". This will be our sequential executable; we will name our parallel executable "laplace_parallel".
 
 
-```python
+```sh
 !pgcc -fast -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
 ```
 
@@ -38,8 +49,8 @@ Before we attempt to parallelize our code, let's run it sequentially, and see ho
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](../../view/C/jacobi.c)  
-[laplace2d.c](../../view/C/laplace2d.c)  
+[jacobi.c](jacobi.c)  
+[laplace2d.c](laplace2d.c)  
 
 ### Optional: Profile the Code
 
@@ -69,7 +80,7 @@ Using OpenACC directives will allow us to parallelize our code without needing t
 
 There are three directives we will cover in this lab: parallel, kernels, and loop. Once we understand all three of them, you will be tasked with parallelizing our laplace code with your preferred directive (or use all of them, if you'd like!)
 
-The parallel directive may be the most straight-forward of the directives. It will mark a region of the code for parallelization (this usually only includes parallelizing a single for loop.) Let's take a look:
+The parallel directive may be the most straight-forward of the directives. It will mark a region of the code for parallelization (this usually only includes parallelizing a single **for** loop.) Let's take a look:
 
 ```
 #pragma acc parallel loop
@@ -108,14 +119,15 @@ We will soon see how the kernels directive is the exact opposite in all of these
 
 It is recommended that you learn all three of the directives prior to altering the laplace code. However, if you wish to try out the parallel directive *now*, then you may use the following links to edit the laplace code.
 
-[jacobi.c](../../edit/C/jacobi.c)   
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[jacobi.c](../../../edit/02-OpenACC-Directives/C/jacobi.c)   
+[laplace2d.c](../../../edit/02-OpenACC-Directives/C/laplace2d.c) 
+
 (be sure to save the changes you make by pressing ctrl+s)
 
 You may run your code by running the following script:
 
 
-```python
+```sh
 !pgcc -fast -ta=multicore -Minfo=accel -o laplace_parallel jacobi.c laplace2d.c && ./laplace_parallel
 ```
 
@@ -180,14 +192,15 @@ Before moving onto our last directive (the loop directive), let's recap what mak
 
 It is recommended that you learn all three of the directives prior to altering the laplace code. However, if you wish to try out the kernels directive *now*, then you may use the following links to edit the laplace code. Pay close attention to the compiler feedback, and be prepared to add the *independent* clause to your loops.
 
-[jacobi.c](../../edit/C/jacobi.c)   
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[jacobi.c](../../../edit/02-OpenACC-Directives/C/jacobi.c)   
+[laplace2d.c](../../../edit/02-OpenACC-Directives/C/laplace2d.c)  
+
 (be sure to save the changes you make by pressing ctrl+s)
 
 You may run your code by running the following script:
 
 
-```python
+```sh
 !pgcc -fast -ta=multicore -Minfo=accel -o laplace_parallel jacobi.c laplace2d.c && ./laplace_parallel
 ```
 
@@ -259,8 +272,10 @@ Notice that just like before, we do not need to include the loop directive.
 ## Parallelizing Our Laplace Code
 
 Using your knowledge about the parallel, kernels, and loop directive, add OpenACC directives to our laplace code and parallelize it. You may edit the code by selecting the following links:  
-[jacobi.c](../../edit/C/jacobi.c)   
-[laplace2d.c](../../edit/C/laplace2d.c)  
+
+[jacobi.c](../../../edit/02-OpenACC-Directives/C/jacobi.c)   
+[laplace2d.c](../../../edit/02-OpenACC-Directives/C/laplace2d.c)  
+
 (be sure to save the changes you make by pressing ctrl+s)
 
 
@@ -268,7 +283,7 @@ Using your knowledge about the parallel, kernels, and loop directive, add OpenAC
 To compile and run your parallel code on a multicore CPU, run the following script:
 
 
-```python
+```sh
 !pgcc -fast -ta=multicore -Minfo=accel -o laplace_parallel jacobi.c laplace2d.c && ./laplace_parallel
 ```
 
@@ -277,7 +292,7 @@ To compile and run your parallel code on a multicore CPU, run the following scri
 If at any point you feel that you have made a mistake, and would like to reset the code to how it was originally, you may run the following script:
 
 
-```python
+```sh
 !cp ./solutions/sequential/jacobi.c ./jacobi.c && cp ./solutions/sequential/laplace2d.c ./laplace2d.c && echo "Reset Complete"
 ```
 
@@ -286,7 +301,7 @@ If at any point you feel that you have made a mistake, and would like to reset t
 If at any point you would like to re-run the sequential code to check results/performance, you may run the following script:
 
 
-```python
+```sh
 !cd solutions/sequential && pgcc -fast -o laplace_seq jacobi.c laplace2d.c && ./laplace_seq
 ```
 
@@ -295,7 +310,7 @@ If at any point you would like to re-run the sequential code to check results/pe
 If you would like to view information about the CPU we are running on, you may run the following script:
 
 
-```python
+```sh
 !pgcpuid
 ```
 
@@ -320,19 +335,19 @@ If you would like to profile your multicore code with PGPROF, click <a href="/vn
 If you would like to check your results, run the following script.
 
 
-```python
+```sh
 !cd solutions/multicore && pgcc -fast -ta=multicore -Minfo=accel -o laplace_parallel jacobi.c laplace2d.c && ./laplace_parallel
 ```
 
 If you would like to view the solution codes, you may use the following links.
 
 **Using the Parallel Directive**  
-[jacobi.c](../../view/C/solutions/multicore/jacobi.c)  
-[laplace2d.c](../../view/C/solutions/multicore/laplace2d.c)  
+[jacobi.c](../../../edit/02-OpenACC-Directives/C/solutions/multicore/jacobi.c)  
+[laplace2d.c](../../../edit/02-OpenACC-Directives/C/solutions/multicore/laplace2d.c)  
 
 **Using the Kernels Directive**  
-[jacobi.c](../../view/C/solutions/multicore/kernels/jacobi.c)  
-[laplace2d.c](../../view/C/solutions/multicore/kernels/laplace2d.c)  
+[jacobi.c](../../../edit/02-OpenACC-Directives/C/solutions/multicore/kernels/jacobi.c)  
+[laplace2d.c](../../../edit/02-OpenACC-Directives/C/solutions/multicore/kernels/laplace2d.c)  
 
 We are able to parallelize our code for a handful of different hardware by using either the **parallel** or **kernels** directive. We are also able to define additional levels of parallelism by using the **loop** directive inside the parallel/kernels directive. You may also use these directives to parallelize nested loops. 
 
@@ -351,7 +366,7 @@ There are a few optimizations that we could make to our code at this point, but,
 3. As discussed earlier, a multicore accelerator is only able to take advantage of one level of parallelism. However, a GPU can take advantage of more. Make sure to use the skills you learned in the **Loop Directive** section of the lab, and parallelize the multi-dimensional loops in our code. Then run the script below to run the code on a GPU. Compare the results (including compiler feedback) to our multicore implementation.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30,managed -Minfo=accel -o laplace_gpu jacobi.c laplace2d.c && ./laplace_gpu
 ```
 
