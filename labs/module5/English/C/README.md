@@ -1,7 +1,17 @@
 
 # Data Management with OpenACC
 
-This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is not currently available.
+This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.md).
+
+You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
+
+---
+Let's execute the cell below to display information about the GPUs running on the server. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
+
+
+```sh
+!pgaccelinfo
+```
 
 ---
 
@@ -30,7 +40,7 @@ We are currently tackling the **parallelize** step. We will include the OpenACC 
 In the previous lab, we ran our code with CUDA Managed Memory, and achieved a considerable performance boost. However, managed memory is not compatible with all GPUs, and it performs worse than programmer defined, proper memory management. Run the following script, and note the time the program takes to run. We are expecting that our own implementation will run a little bit better.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30,managed -Minfo=accel -o laplace_managed jacobi.c laplace2d.c && ./laplace_managed
 ```
 
@@ -38,8 +48,8 @@ In the previous lab, we ran our code with CUDA Managed Memory, and achieved a co
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](../../view/C/jacobi.c)  
-[laplace2d.c](../../view/C/laplace2d.c)  
+[jacobi.c](jacobi.c)  
+[laplace2d.c](laplace2d.c)  
 
 ### Optional: Profile the Code
 
@@ -203,19 +213,19 @@ The second loop is preceeded by the parallel directive, meaning that it is conta
 
 Use the following links to edit our laplace code. Add a structured data directive to properly handle the arrays **A** and **Anew**. 
 
-[jacobi.c](../../edit/C/jacobi.c)   
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[jacobi.c](../../../edit/04-Data-Management-with-OpenACC/C/jacobi.c)   
+[laplace2d.c](../../../edit/04-Data-Management-with-OpenACC/C/laplace2d.c)  
 
 Then, run the following script to check you solution. You code should run just as good as (or slightly better) than our managed memory code.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30 -Minfo=accel -o laplace_structured jacobi.c laplace2d.c && ./laplace_structured
 ```
 
 If you are feeling stuck, or would like to check your answer, you can view the correct answer with the following link.
 
-[jacobi.c](../../view/C/solutions/advanced_data/structured/jacobi.c)
+[jacobi.c](../../../edit/04-Data-Management-with-OpenACC/C/solutions/advanced_data/structured/jacobi.c)
 
 ### Optional: Profile the Code
 
@@ -223,7 +233,7 @@ If you would like to profile the code, you may select <a href="/vnc" target="_bl
 
 Take a moment to explore the profiler, and when you're ready, let's zoom in on the very beginning of our profile.
 
-![structured_pgprof1.PNG](../../images/structured_pgprof1.PNG)
+![structured_pgprof1.PNG](../images/structured_pgprof1.PNG)
 
 We can see that we have uninterupted computation, and all of our data movement happens at the beginning of the program. This is ideal, because we are avoiding data transers in the middle of our computation.
 
@@ -276,25 +286,25 @@ Just like in the above code sample, you must first allocate the CPU copy of the 
 We are going to edit our code to use unstructured data directives to handle memory management. First, run the following script to reset your code to how it was before adding the structured data directive.
 
 
-```python
+```sh
 !cp ./solutions/basic_data/jacobi.c ./jacobi.c && cp ./solutions/basic_data/laplace2d.c ./laplace2d.c && echo "Reset Finished"
 ```
 
 Now edit the code to use unstructured data directives. To fully utilize the unstructured data directives, try to get the code working by only altering the **laplace2d.c** code.
 
-[jacobi.c](../../edit/C/jacobi.c)   
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[jacobi.c](../../../edit/04-Data-Management-with-OpenACC/C/jacobi.c)   
+[laplace2d.c](../../../edit/04-Data-Management-with-OpenACC/C/laplace2d.c)  
 
 Run the following script to check your solution. Your code should run as fast as our structured implementation.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30 -Minfo=accel -o laplace_unstructured jacobi.c laplace2d.c && ./laplace_unstructured
 ```
 
 If you are feeling stuck, or would like to check your answer, you can view the correct answer with the following link.
 
-[laplace2d.c](../../view/C/solutions/advanced_data/unstructured/laplace2d.c)
+[laplace2d.c](../../../edit/04-Data-Management-with-OpenACC/C/solutions/advanced_data/unstructured/laplace2d.c)
 
 ### Optional: Profile the Code
 
@@ -302,7 +312,7 @@ If you would like to profile the code, you may select <a href="/vnc" target="_bl
 
 Take a moment to explore the profiler, and when you're ready, let's zoom in on the very beginning of our profile.
 
-![unstructured_pgprof1.PNG](../../images/unstructured_pgprof1.PNG)
+![unstructured_pgprof1.PNG](../images/unstructured_pgprof1.PNG)
 
 We can see that we have uninterupted computation, and all of our data movement happens at the beginning of the program. This is ideal, because we are avoiding data transers in the middle of our computation. If you also profiled the structured version of the code, you will notice that the profiles are nearly identical. This isn't surprising, since the structured and unstructured approach work very similarly at the hardware level. However, structured data regions may be easier in simple codes, whereas some codes might flow better when using an unstructured approach. It is up to the programmer to decide which to use.
 
@@ -357,7 +367,7 @@ As an example, let's create a version of our laplace code where we want to print
 Let's run this code (on a very small data set, so that we don't overload the console by printing thousands of numbers).
 
 
-```python
+```sh
 !cd update && pgcc -fast -ta=tesla:cc30 -Minfo=accel -o laplace_no_update jacobi.c laplace2d.c && ./laplace_no_update 10 10
 ```
 
@@ -394,7 +404,7 @@ We can see that the array is not changing. This is because the host copy of **A*
 ```
 
 
-```python
+```sh
 !cd update/solution && pgcc -fast -ta=tesla:cc30 -Minfo=accel -o laplace_update jacobi.c laplace2d.c && ./laplace_update 10 10
 ```
 
