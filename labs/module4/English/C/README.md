@@ -3,6 +3,16 @@
 
 This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.md).
 
+You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
+
+---
+Let's execute the cell below to display information about the GPUs running on the server.  To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
+
+
+```sh
+!pgaccelinfo
+```
+
 ---
 
 ## Introduction
@@ -30,7 +40,7 @@ We are currently tackling the **parallelize** step. We have parallelized our cod
 We have already completed a basic multicore implementation of our lab code. Run the following script IF you would prefer to use the parallel directive.
 
 
-```python
+```sh
 !cp ./solutions/multicore/laplace2d.c ./laplace2d.c
 ```
 
@@ -38,7 +48,7 @@ We have already completed a basic multicore implementation of our lab code. Run 
 If you would prefer to use the kernels directive, run the following script.
 
 
-```python
+```sh
 !cp ./solutions/multicore/kernels/laplace2d.c ./laplace2d.c
 ```
 
@@ -46,7 +56,7 @@ If you would prefer to use the kernels directive, run the following script.
 Then you may run the multicore code by running the following script. An executable called **laplace_multicore** will be created.
 
 
-```python
+```sh
 !pgcc -fast -ta=multicore -Minfo=accel -o laplace_multicore jacobi.c laplace2d.c && ./laplace_multicore
 ```
 
@@ -54,8 +64,8 @@ Then you may run the multicore code by running the following script. An executab
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](../../view/C/jacobi.c)  
-[laplace2d.c](../../view/C/laplace2d.c)  
+[jacobi.c](jacobi.c)  
+[laplace2d.c](laplace2d.c)  
 
 ### Optional: Profile the Code
 
@@ -185,24 +195,24 @@ is equivalent to
 
 Add **copy** data clause to our laplace code by selecting the following links:
 
-[jacobi.c](../../edit/C/jacobi.c)  
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[jacobi.c](../../../edit/03-GPU-Programming-with-OpenACC/C/jacobi.c)  
+[laplace2d.c](../../../edit/03-GPU-Programming-with-OpenACC/C/laplace2d.c)  
 
 Then, when you are ready, you may run the code by running the following script. It may not be intuitively obvious yet, but we are expecting the code to perform very poorly. For this reason, we are running our GPU code on a **significantly smaller input size**. If you were to run the GPU code on the full sized input, it will take several minutes to run.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30 -Minfo=accel -o laplace_data_clauses jacobi.c laplace2d.c && ./laplace_data_clauses 1024 1024
 ```
 
-If you are unsure about your answer, you can view the solution [here.](../../view/C/solutions/basic_data/laplace2d.c)
+If you are unsure about your answer, you can view the solution [here.](../../../edit/03-GPU-Programming-with-OpenACC/C/solutions/basic_data/laplace2d.c)
 
 ### Optional: Compiling GPU Code
 
 Different GPUs will need to be compiled in slightly different ways. To get information about our GPU, we can use the **pgaccelinfo** command.
 
 
-```python
+```sh
 !pgaccelinfo
 ```
 
@@ -261,7 +271,7 @@ Upon zooming in, we get a much better idea of what is happening inside of our pr
 As with many things in OpenACC, we have the option to allow the compiler to handle memory management. We will be able to achieve better performance by managing the memory ourselves, however, allowing the compiler to use managed memory is very simple, and will achieve much better performance than our naive solution from earlier. We do not need to make any changes to our code to get managed memory working. Simply run the following script. Keep in mind that unlike earlier, we are now running our code with the full sized 4096x4096 array.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30,managed -Minfo=accel -o laplace_managed jacobi.c laplace2d.c && ./laplace_managed
 ```
 
