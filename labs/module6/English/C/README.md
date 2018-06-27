@@ -30,7 +30,7 @@ We are currently tackling the **optimize** step. We will include the OpenACC loo
 In the previous labs, we have built up a working parallel code that can run on both a multicore CPU and a GPU. Let's run the code and note the performance, so that we can compare the runtime to any future optimizations we make.
 
 
-```python
+```sh
 !pgcc -fast -ta=tesla:cc30 -Minfo=accel -o laplace_baseline jacobi.c laplace2d.c && ./laplace_baseline
 ```
 
@@ -38,8 +38,8 @@ In the previous labs, we have built up a working parallel code that can run on b
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](../../view/C/jacobi.c)  
-[laplace2d.c](../../view/C/laplace2d.c)  
+[jacobi.c](jacobi.c)  
+[laplace2d.c](laplace2d.c)  
 
 ### Optional: Profile the Code
 
@@ -236,19 +236,19 @@ This is a list of all of the available operators in OpenACC.
 
 We are compiling our code with the PGI compiler, which is automatically able to include the reduction clause. However, in other compilers, we may not be as fortunate. Use the following link to add the **reduction clause** with the **max operator** to our code.
 
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 You may then run the following script to verify that the compiler is properly recognizing your reduction clause.
 
 
-```python
+```sh
 !pgcc -ta=tesla:cc30 -Minfo=accel -o laplace_reduction jacobi.c laplace2d.c && ./laplace_reduction
 ```
 
 You may also check your answer by selecting the following link.
 
-[laplace2d.c](../../view/C/solutions/reduction/laplace2d.c)
+[laplace2d.c](solutions/reduction/laplace2d.c)
 
 ### Private Clause
 
@@ -326,13 +326,13 @@ for(int i = 0; i < N; i++)
 
 Use the following link to edit our code. Use the **collapse clause** to collapse our multi-dimensional loops into a single dimensional loop.
 
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
 
 
-```python
+```sh
 !pgcc -ta=tesla:cc30 -Minfo=accel -o laplace_collapse jacobi.c laplace2d.c && ./laplace_collapse
 ```
 
@@ -388,13 +388,13 @@ for(int i = 0; i < N; i++)
 
 Use the following link to edit our code. Replace the**collapse clause** with the **tile clause** to break our multi-dimensional loops into smaller tiles. Try using a variety of different tile sizes, but always keep one of the dimensions as a **multiple of 32**. We will talk later about why this is important.
 
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
 
 
-```python
+```sh
 !pgcc -ta=tesla:cc30 -Minfo=accel -o laplace_tile jacobi.c laplace2d.c && ./laplace_tile
 ```
 
@@ -558,13 +558,13 @@ for(int i = 0; i < N; i++)
 
 Use the following link to edit our code. Replace our ealier clauses with **gang, worker, and vector** To reorganize our thread blocks. Try it using a few different numbers, but always keep the vector length as a **multiple of 32** to fully utilize **warps**.
 
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
 
 
-```python
+```sh
 !pgcc -ta=tesla:cc30 -Minfo=accel -o laplace_gang_worker_vector jacobi.c laplace2d.c && ./laplace_gang_worker_vector
 ```
 
@@ -575,26 +575,26 @@ Now that we have covered the various ways to edit our loops, apply this knowledg
 You may run the following script to reset your code with the **kernels directive**.
 
 
-```python
+```sh
 !cp ./solutions/base_parallel/kernels/laplace2d.c ./laplace2d.c && echo "Reset Finished"
 ```
 
 You may run the following script to reset your code with the **parallel directive**.
 
 
-```python
+```sh
 !cp ./solutions/base_parallel/parallel/laplace2d.c ./laplace2d.c && echo "Reset Finished"
 ```
 
 Then use the following link to edit our laplace code.
 
-[laplace2d.c](../../edit/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
 
 
-```python
+```sh
 !pgcc -ta=tesla:cc30 -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
 ```
 
