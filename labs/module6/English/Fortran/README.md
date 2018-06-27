@@ -3,15 +3,25 @@
 
 This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/README.md).
 
+You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
+
+---
+Let's execute the cell below to display information about the GPUs running on the server. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
+
+
+```sh
+!pgaccelinfo
+```
+
 ---
 
 ## Introduction
 
-Our goal for this lab is to learn what exactly code profiling is, and how we can use it to help us write powerful parallel programs.  
+Our goal for this lab is to use the OpenACC Loop clauses to opimize our Parallel Loops.
   
   
   
-![development-cycle.png](../images/development-cycle.png)
+![development_cycle.png](../images/development_cycle.png)
 
 This is the OpenACC 3-Step development cycle.
 
@@ -21,242 +31,537 @@ This is the OpenACC 3-Step development cycle.
 
 **Optimize** your code, focusing on maximizing performance. Performance may not increase all-at-once during early parallelization.
 
-We are currently tackling the **analyze** step. We will use PGI's code profiler to get an understanding of a relatively simple sample code before moving onto the next two steps.
+We are currently tackling the **optimize** step. We will include the OpenACC loop clauses to optimize the execution of our parallel loop nests.
+
+---
 
 ## Run the Code
 
-Our first step to analyzing this code is to run it. We need to record the results of our program before making any changes so that we can compare them to the results from the parallel code later on. It is also important to record the time that the program takes to run, as this will be our primary indicator to whether or not our parallelization is improving performance.
+In the previous labs, we have built up a working parallel code that can run on both a multicore CPU and a GPU. Let's run the code and note the performance, so that we can compare the runtime to any future optimizations we make.
 
 
-```python
-!pgcc -fast -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
+```sh
+!pgfortran -fast -ta=tesla:cc30 -Minfo=accel -o laplace_baseline jacobi.f90 laplace2d.f90 && ./laplace_baseline
 ```
 
-    jacobi.c:
-    laplace2d.c:
-    Compilation Successful!
-    Jacobi relaxation Calculation: 4096 x 4096 mesh
-        0, 0.250000
-      100, 0.002397
-      200, 0.001204
-      300, 0.000804
-      400, 0.000603
-      500, 0.000483
-      600, 0.000403
-      700, 0.000345
-      800, 0.000302
-      900, 0.000269
-     total: 49.446116 s
+### Optional: Analyze the Code
+
+If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
+
+[jacobi.f90](jacobi.f90)  
+[laplace2d.f90](laplace2d.f90)  
+
+### Optional: Profile the Code
+
+If you would like to profile the code, you may select <a href="/vnc" target="_blank">this link.</a> This will open a noVNC window, then you may use PGPROF to profile our baseline laplace code. The laplace_baseline executable will be found in the /notebooks/C directory.
+
+---
+
+## OpenACC Loop Directive
+
+The loop directive allows us to mark specific loops for parallelization. The loop directive also allows us to map specific optimizations/alterations to our loops using **loop clauses**. Not all loop clauses are used to optimize our code; some are also used to verify code correctness. A few examples of the loop directive are as follows:
+
+```fortran
+!$acc parallel loop < loop clauses >
+do i = 1, N
+    < loop code >
+end do
+```
+
+```fortran
+!$acc kernels loop < loop clauses >
+do i = 1, N
+    < loop code >
+end do
+```
+
+```fortran
+!$acc parallel loop < loop clauses >
+do i = 1, N
+    !$acc loop < loop clauses >
+    do j = 1, M
+        < loop code >
+    end do
+end do
+```
+
+Also, including loop optimizations does not always optimize the code. It is up to the programmer to decide which loop optimizations will work best for their loops.
+
+### Independent Clause
+
+When using the **kernels directive**, the compiler will decide which loops are, and are not, parallelizable. However, the programmer can override this compiler decision by using the **independent clause**. The independent clause is a way for the programmer to guarantee to the compiler that a loop is **parallelizable**.
+
+```fortran
+!$acc kernels loop independent
+do i = 1, N
+    < Parallel Loop Code >
+end do
+
+
+
+!$acc kernels
+    do i = 1, N
+        < Parallel Loop Code >
+    end do
     
-
-### Optional: Compiling Code
-
-We are using the PGI compiler to compiler our code. You will not need to memorize the compiler commands to complete this lab, however, they will be helpful to know if you want to parallelize your own personal code with OpenACC.
-
-**pgcc**      : this is the command to compile C code  
-**pgc++**     : this is the command to compile C++ code  
-**pgfortran** : this is the command to compile Fortran code  
-**-fast**     : this compiler flag will allow the compiler to perform additional optimizations to our code
-
-### Understanding Code Results
-
-TODO
-
-## Analyze the Code
-
-Now that we know how long the code took to run, and what the code's output looks like, we should be able to view the code with a decent idea of what is happening. The code is contained within two files, which you may open and view.
-
-[jacobi.c](../../view/C/jacobi.c)  
-[laplace2d.c](../../view/C/laplace2d.c)  
-  
-You may read through these two files on your own, but we will also highlight the most important parts below in the "Code Breakdown".
-
-### Optional: Code Theory
-
-The code simulates heat distribution across a 2-dimensional metal plate. In the beginning, the plate will be unheated, meaning that the entire plate will be room temperature. Then, a constant heat will be applied to the edge of the plate, then the code will simulate that heat distributing across the plate.  
-
-This is a visual representation of the plate before the simulation starts:  
-  
-![plate1.png](../images/plate1.png)  
-  
-We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.c](../../view/C/laplace2d.c) file, we see a function called **initialize**. This function is what "heats" the top edge of the plate. 
-  
-```
-void initialize(double *restrict A, double *restrict Anew, int m, int n)  
-{  
-    memset(A, 0, n * m * sizeof(double));  
-    memset(Anew, 0, n * m * sizeof(double));  
-  
-    for(int i = 0; i < m; i++){  
-        A[i] = 1.0;  
-        Anew[i] = 1.0;  
-    }  
-}  
+    !$acc loop independent
+    do i = 1, N
+        < Parallel Loop Code >
+    end do
+!$acc end kernels
 ```
 
-After the top edge is heated, the code will simulate that heat distributing across the length of the plate.  
-This is the plate after several iterations of our simulation:  
-  
-![plate2.png](../images/plate2.png) 
+In the second example, we have two loops. The compiler will make a decision whether or not the first loop is parallelizable. In the second loop however, we have included the independent clause. This means that the compiler will trust the programmer, and assume that the second loop is parallelizable.
 
-That's the theory: simple heat distribution. However, we are more interested in how the code works. 
+When using the **parallel directive**, the independent clause is automatically implied. This means that you do not need to use the **independent clause** when you are using the **parallel directive**.
 
-### Code Breakdown
+### Auto Clause
 
-The 2-dimensional plate is represented by a 2-dimensional array containing double values. These doubles represent temperature; 0.0 is room temperature, and 1.0 is our max temperature. The 2-dimensional plate has two states, one represents the current temperature, and one represents the simulated, updated temperature. These two states are represented by arrays **A** and **Anew** respectively. The following is a visual representation of these arrays, with the top edge "heated".
+The **auto clause** is more-or-less the complete opposite of the **independent clause**. When you are using the **parallel directive**, the compiler will trust anything that the programmer decides. This means that if the programmer believes that a loop is parallelizable, the compiler will trust the programmer. However, if you include the auto clause with your loops, the compiler will double check the loops, and decide whether or not to parallelize them.
 
-![plate_sim2.png](../images/plate_sim2.png)  
-    
-    
-    
-The distinction between these two arrays is very important for our **calcNext** function. Our calcNext is essentially our "simulate" function. calcNext will look at the inner elements of A (meaning everything except for the edges of the plate) and update each elements temperature based on the temperature of its neighbors.  
-
-![plate_sim3.png](../images/plate_sim3.png)  
-
-This is the **calcNext** function:
-```
-double calcNext(double *restrict A, double *restrict Anew, int m, int n)
-{
-    double error = 0.0;  
-    for( int j = 1; j < n-1; j++)  
-    {  
-        for( int i = 1; i < m-1; i++ )   
-        {  
-            Anew[OFFSET(j, i, m)] = 0.25 * ( A[OFFSET(j, i+1, m)] + A[OFFSET(j, i-1, m)]  
-                                           + A[OFFSET(j-1, i, m)] + A[OFFSET(j+1, i, m)]);  
-            error = fmax( error, fabs(Anew[OFFSET(j, i, m)] - A[OFFSET(j, i , m)]));  
-        }  
-    }  
-    return error;  
-}  
+```fortran
+!$acc parallel loop auto
+do i = 1, N
+    < Parallel Loop Code >
+end do
 ```
 
-Lastly, our **swap** function will copy the contents of **Anew** to **A**.
+The **independent clause** is a way for the programmer to assert to the compiler that a loop is parallelizable. The **auto clause** is a way for the programmer to tell the compiler to analyze the loop, and to determine whether or not it is parallelizable.
 
-```
-void swap(double *restrict A, double *restrict Anew, int m, int n)
-{	
-    for( int j = 1; j < n-1; j++)
-    {
-        for( int i = 1; i < m-1; i++ )
-        {
-            A[OFFSET(j, i, m)] = Anew[OFFSET(j, i, m)];    
-        }
-    }
-}
-```
+### Seq Clause
 
-## Profile the Code
+The **seq clause** (short for "sequential") is used to define a loop that should run sequentially on the parallel hardware. This loop clause is usually automatically applied to large, multidimensional loop nests, since the compiler may only be able to describe parallelism for the outer-most loops. For example:
 
-Now we should have a good idea of what the code is doing. It is time to profile the code, to get a better understanding of how the code is running performance-wise. To profile our code, we will be using PGPROF, which is a visual profiler that comes with the PGI compiler. You can run PGPROF through noVNC by <a href="/vnc" target="_blank">clicking this link</a>.
-
-We will start by profiling our laplace executable that we created earlier (when we ran our code). Select File > New Session, then where is says File: Enter Executable File [required], we will select our ***laplace*** executable.
-
-TODO  
-INSERT SCREENSHOT  
-FIGURE OUT WHY THE noVNC IS LOOKING AT A COMPLETELY DIFFERENT FILE SYSTEM  
-
-## Step 2 - Express Parallelism
-
-Within each of the routines identified above, express the available parallelism
-to the compiler using either the `acc kernels` or `acc parallel loop`
-directive. As an example, here's the OpenACC code to add to the `matvec` routine.
-
-```
-void matvec(const matrix& A, const vector& x, const vector &y) {
-
-  unsigned int num_rows=A.num_rows;
-  unsigned int *restrict row_offsets=A.row_offsets;
-  unsigned int *restrict cols=A.cols;
-  double *restrict Acoefs=A.coefs;
-  double *restrict xcoefs=x.coefs;
-  double *restrict ycoefs=y.coefs;
-
-#pragma acc kernels
-  {
-    for(int i=0;i<num_rows;i++) {
-      double sum=0;
-      int row_start=row_offsets[i];
-      int row_end=row_offsets[i+1];
-      for(int j=row_start;j<row_end;j++) {
-        unsigned int Acol=cols[j];
-        double Acoef=Acoefs[j];
-        double xcoef=xcoefs[Acol];
-        sum+=Acoef*xcoef;
-      }
-      ycoefs[i]=sum;
-    }
-  }
-}
+```fortran
+do i = 1, N
+    do j = 1, M
+        do k = 1, Q
+            < Loop Code >
+        end do
+    end do
+end do
 ```
 
-Add the necessary directives to each routine **one at a time** in order of importance. After adding the directive, recompile the code, check that the answers have remained the same, and note the performance difference from your
-change.
+The compiler may only be able to parallelize the **i and j** loops, and will choose to run the **k** loop **sequentially**. The **seq clause** is also useful for running very small, nested loops sequentially. For example:
 
-```
-$ make
-pgc++ -fast -acc -ta=tesla:managed -Minfo=accel main.cpp -o cg
-
-matvec(const matrix &, const vector &, const vector &):
-      8, include "matrix_functions.h"
-          15, Generating copyout(ycoefs[:num_rows])
-              Generating
-copyin(xcoefs[:],Acoefs[:],cols[:],row_offsets[:num_rows+1])
-          16, Loop is parallelizable
-              Accelerator kernel generated
-              Generating Tesla code
-              16, #pragma acc loop gang, vector(128) /* blockIdx.x threadIdx.x */
-          20, Loop is parallelizable
+```fortran
+do i = 1, 1000000
+    do j = 1, 4
+        do k = 1, 1000000
+            < Loop Code >
+        end do
+    end do
+end do
 ```
 
-The performance may slow down as you're working on this step. Be sure
-to read the compiler feedback to understand how the compiler parallelizes the
-code for you. If you are doing the C/C++ lab, it may be necessary to declare
-some pointers as `restrict` in order for the compiler to parallelize them. You
-will know if this is necessary if the compiler feedback lists a "complex loop
-carried dependency."
+The middle loop is very small, and will most likely not benefit from parallelization. To fix this, we may apply the **seq clause** as follows:
 
-### Step 3 - Re-Profile Application
+```fortran
+!$acc parallel loop
+do i = 1, 1000000
+    !$acc loop seq
+    do j = 1, 4
+        !$acc loop
+        do k = 1, 1000000
+            < Loop Code >
+        end do
+    end do
+end do
+```
 
-Once you have added the OpenACC directives to your code, you should obtain a
-new profile of the application. For this step, use the NVIDIA Visual Profiler
-to obtain a GPU timeline and see how the the GPU computation and data movement
-from CUDA Unified Memory interact. 
+In this code snippet, the middle loop will be run sequentially, while the outer-most loop and inner-most loop will be run in parallel.
 
-- If you are doing this lab via qwikLABs, connect to the Ubuntu remote desktop using the <a href="/vnc" target="_blank">browser-based VNC client</a>
+### Reduction Clause
 
-Once Visual Profiler has started, create a new session by selecting *File -> New
-Session*. Then select the executable that you built by pressing the *Browse*
-button next to *File*, browse to `/home/ubuntu/c99` or `/home/ubuntu/f90`, 
-select `cg`,  and then press *Next*. On the next screen ensure that
-*Enable unified memory profiling* is checked and press *Finish*. The result
-should look like the image below. Experiment with Visual Profiler to see what
-information you can learn from it.
+Up to this point, we have technically been using the **reduction clause** in our laplace code. We were not explicitly defining the reduction, instead the compiler has been automatically applying the reduction clause to our code. Let's look at one of the loops from within our laplace2d.c code file.
 
-![Image of NVIDIA Visual Profiler after completing lab 2 with the kernels
-directive](https://github.com/NVIDIA-OpenACC-Course/nvidia-openacc-course-sources/raw/master/labs/lab2/visual_profiler_lab2.png)
+```fortran
+!$acc parallel loop present(A,Anew)
+do j=1,m-2
+    do i=1,n-2
+        Anew(i,j) = 0.25_fp_kind * ( A(i+1,j  ) + A(i-1,j  ) + &
+                                     A(i  ,j-1) + A(i  ,j+1) )
+        error = max( error, abs(Anew(i,j)-A(i,j)) )
+    end do
+end do
+```
 
+More specifically, let's focus on this single line of code:
+
+```fortran
+error = max( error, abs(Anew(i,j)-A(i,j)) )
+```
+
+Each iteration of our inner-loop will write to the value **error**. When we are running thousands of these loop iterations **simultaneously**, it can become very dangerous to let all of them write directly to **error**. To fix this, we must use the OpenACC **reduction clause**. Let's look at the syntax.
+
+```fortran
+!$acc parallel loop reduction(operator:value)
+```
+
+And let's look at a quick example of the use.
+
+```fortran
+!$acc parallel loop reduction(+:sum)
+do i = 1, N
+    sum = sum + A(i)
+end do
+```
+
+This is a list of all of the available operators in OpenACC.
+
+|Operator    |Example                     |Description           |
+|:----------:|:---------------------------|:---------------------|
+|+           |reduction(+:sum)            |Mathematical summation|
+|*           |reduction(*:product)        |Mathematical product  |
+|max         |reduction(max:maximum)      |Maximum value         |
+|min         |reduction(min:minimum)      |Minimum value         |
+|&           |reduction(&:val)            |Bitwise AND           |
+|&#124;      |reduction(&#124;:val)       |Bitwise OR            |
+|&&          |reduction(&&:bool)          |Logical AND           |
+|&#124;&#124;|reduction(&#124;&#124;:bool)|Logical OR            |
+
+#### Optional: Implementing the Reduction Clause
+
+We are compiling our code with the PGI compiler, which is automatically able to include the reduction clause. However, in other compilers, we may not be as fortunate. Use the following link to add the **reduction clause** with the **max operator** to our code.
+
+[laplace2d.f90](laplace2d.f90)  
+(make sure to save your code with ctrl+s)
+
+You may then run the following script to verify that the compiler is properly recognizing your reduction clause.
+
+
+```sh
+!pgfortran -ta=tesla:cc30 -Minfo=accel -o laplace_reduction jacobi.f90 laplace2d.f90 && ./laplace_reduction
+```
+
+You may also check your answer by selecting the following link.
+
+[laplace2d.f90](solutions/reduction/laplace2d.f90)
+
+### Private Clause
+
+The private clause allows us to mark certain variables (and even arrays) as "private". The best way to visualize it is with an example:
+
+```fortran
+int tmp;
+
+!$acc parallel loop private(tmp)
+do i = 1, N/2
+    tmp = A(i)
+    A(i) = A(N-i-1)
+    A(N-i-1) = tmp;
+end do
+```
+
+In this code, each thread will have its own **private copy of tmp**. You may also declare static arrays as private, like this:
+
+```fortran
+integer :: tmp(10)
+
+!$acc parallel loop private(tmp(1:10))
+do i = 1, N
+    < Loop code that uses the tmp array >
+end do
+```
+
+When using **private variables**, the variable only exists within the private scope. This generally means that the private variable only exists for a single loop iteration, and the values you store in the private variable cannot extend out of the loop.
+
+### Collapse Clause
+
+This is our first true **loop optimization**. The **collapse clause** allows us to transform a multi-dimensional loop nests into a single-dimensional loop. This process is helpful for increasing the overall length (which usually increases parallelism) of our loops, and will often help with memory locality. Let's look at the syntax.
+
+```fortran
+!$acc parallel loop collapse( N )
+```
+
+Where N is the number of loops to collapse.
+
+```fortran
+!$acc parallel loop collapse( 3 )
+do i = 1, N
+    do j = 1, M
+        do k = 1, Q
+            < loop code >
+        end do
+    end do
+end do
+```
+
+This code will combine the 3-dimensional loop nest into a single 1-dimensional loop. It is important to note that when using the **collapse clause**, the inner loops should not have their own **loop directive**. What this means is that the following code snippet is **incorrect** and will give a warning when compiling.
+
+```fortran
+!$acc parallel loop collapse( 3 )
+do i = 1, N
+    !$acc loop
+    do j = 1, M
+        !$acc loop
+        do k = 1, Q
+            < loop code >
+        end do
+    end do
+end do
+```
+
+#### Implementing the Collapse Clause
+
+Use the following link to edit our code. Use the **collapse clause** to collapse our multi-dimensional loops into a single dimensional loop.
+
+[laplace2d.f90](laplace2d.f90)  
+(make sure to save your code with ctrl+s)
+
+Then run the following script to see how the code runs.
+
+
+```sh
+!pgfortran -ta=tesla:cc30 -Minfo=accel -o laplace_collapse jacobi.f90 laplace2d.f90 && ./laplace_collapse
+```
+
+### Tile Clause
+
+The **tile clause** allows us to break up a multi-dimensional loop into *tiles*, or *blocks*. This is often useful for increasing memory locality in some codes. Let's look at the syntax.
+
+```fortran
+!$acc parallel loop tile( x, y, z, ... )
+```
+
+Our tiles can have as many dimensions as we want, though we must be careful to not create a tile that is too large. Let's look at an example:
+
+```fortran
+!$acc parallel loop tile( 32, 32 )
+do = 1, N
+    do j = 1, M
+        < loop code >
+    end do
+end do
+```
+
+The above code will break our loop iterations up into 32x32 tiles (or blocks), and then execute those blocks in parallel. Let's look at a slightly more specific code.
+
+```fortran
+!$acc parallel loop tile( 32, 32 )
+do i = 1, 128
+    do j = 1, 128
+        < loop code >
+    end do
+end do
+```
+
+In this code, we have 128x128 loop iterations, which are being broken up into 32x32 tiles. This means that we will have 16 tiles, each tile being size 32x32. Similar to the **collapse clause**, the inner loops should not have the **loop directive**. This means that the following code is **incorrect** and will give a warning when compiling.
+
+```fortran
+!$acc parallel loop tile( 32, 32 )
+do i = 1, N
+    !$acc loop
+    do j = 1, M
+        < loop code >
+    end do
+end do
+```
+
+#### Implementing the Tile Clause
+
+Use the following link to edit our code. Replace the**collapse clause** with the **tile clause** to break our multi-dimensional loops into smaller tiles. Try using a variety of different tile sizes, but always keep one of the dimensions as a **multiple of 32**. We will talk later about why this is important.
+
+[laplace2d.f90](laplace2d.f90)  
+(make sure to save your code with ctrl+s)
+
+Then run the following script to see how the code runs.
+
+
+```sh
+!pgfortran -ta=tesla:cc30 -Minfo=accel -o laplace_tile jacobi.f90 laplace2d.f90 && ./laplace_tile
+```
+
+### Gang/Worker/Vector
+
+This is our last optimization, and arguably the most important one. In OpenACC, **Gang Worker Vector** is used to define additional levels of parallelism. Specifically for NVIDIA GPUs, gang worker vector will define the **organization** of our GPU threads. Each loop will have an optimal Gang Worker Vector implementation, and finding that correct implementation will often take a bit of thinking, and possibly some trial and error. So let's explain how Gang Worker Vector actually works.
+
+![gang_worker_vector.png](../images/gang_worker_vector.png)
+
+This image represents a single **gang**. When parallelizing our **for loops**, the **loop iterations** will be **broken up evenly** among a number of gangs. Each gang will contain a number of **threads**. These threads are organized into **blocks**. A **worker** is a row of threads. In the above graphic, there are 3 **workers**, which means that there are 3 rows of threads. The **vector** refers to how long each row is. So in the above graphic, the vector is 8, because each row is 8 threads long.
+
+By default, when programming for a GPU, **gang** and **vector** paralleism is automatically applied. Let's see a simple GPU sample code where we explicitly show how the gang and vector works.
+
+```fortran
+!$acc parallel loop gang
+do i = 1, N
+    !$acc loop vector
+    do j = 1, M
+        < loop code >
+    end do
+end do
+```
+
+The outer loop will be evenly spread across a number of **gangs**. Then, within those gangs, the inner-loop will be executed in parallel across the **vector**. This is a process that usually happens automatically, however, we can usually achieve better performance by optimzing the gang worker vector ourselves.
+
+Lets look at an example where using gang worker vector can greatly increase a loops parallelism.
+
+```fortran
+!$acc parallel loop gang
+do i = 1, < N
+    !$acc loop vector
+    do j = 1, M
+        do k = 1, Q
+            < loop code >
+        end do
+    end do
+end do
+```
+
+In this loop, we have **gang level** parallelism on the outer-loop, and **vector level** parallelism on the middle-loop. However, the inner-loop does not have any parallelism. This means that each thread will be running the inner-loop, however, GPU threads aren't really made to run entire loops. To fix this, we could use **worker level** parallelism to add another layer.
+
+```fortran
+!$acc parallel loop gang
+do i = 1, N
+    !$acc loop worker
+    do j = 1, M
+        !$acc loop vector
+        do k = 1, Q
+            < loop code >
+        end do
+    end do
+end do
+```
+
+Now, the outer-loop will be split across the gangs, the middle-loop will be split across the workers, and the inner loop will be executed by the threads within the vector.
+
+#### Gang Worker Vector Syntax
+
+We have been showing really general examples of gang worker vector so far. One of the largest benefits of gang worker vector is the ability to explicitly define how many gangs and workers you need, and how many threads should be in the vector. Let's look at the syntax for the parallel directive:
+
+```fortran
+!$acc parallel num_gangs( 2 ) num_workers( 4 ) vector_length( 32 )
+    !$acc loop gang worker
+    do i = 1, N
+        !$acc loop vector
+        do j = 1, M
+            < loop code >
+        end do
+    end do
+!$acc end parallel
+```
+
+And now the syntax for the kernels directive:
+
+```fortran
+!$acc kernels loop gang( 2 ) worker( 4 )
+do i = 1, N
+    !$acc loop vector( 32 )
+    do j = 1, M
+        < loop code >
+    end do
+end do
+```
+
+#### Avoid Wasting Threads
+
+When parallelizing small arrays, you have to be careful that the number of threads within your vector is not larger than the number of loop iterations. Let's look at a simple example:
+
+```fortran
+!$acc kernels loop gang
+do i = 1, 1000000000
+    !$acc loop vector(256)
+    do j = 1, 32
+        < loop code >
+    end do
+end do
+```
+
+In this code, we are parallelizing an inner-loop that has 32 iterations. However, our vector is 256 threads long. This means that when we run this code, we will have a lot more threads than loop iterations, and a lot of the threads will be sitting idly. We could fix this in a few different ways, but let's use **worker level parallelism** to fix it.
+
+```fortran
+!$acc kernels loop gang worker(8)
+do i = 1, 1000000000
+    !$acc loop vector(32)
+    do j = 1, 32
+        < loop code >
+    end do
+end do
+```
+
+Originally we had 1 (implied) worker, that contained 256 threads. Now, we have 8 workers that each have only 32 threads. We have eliminated all of our wasted threads by reducing the length of the **vector** and increasing the number of **workers**.
+
+#### The Rule of 32 (Warps)
+
+The general rule of thumb for programming for NVIDIA GPUs is to always ensure that your vector length is a multiple of 32 (which means 32, 64, 96, 128, ... 512, ... 1024... etc.). This is because NVIDIA GPUs are optimized to use **warps**. Warps are groups of 32 threads that are executing the same computer instruction. So as a reference:
+
+```fortran
+!$acc kernels loop gang
+do i = 1, N
+    !$acc loop vector(32)
+    do j = 1, M
+        < loop code >
+    end do
+end do
+```
+
+will perform much better than:
+
+```fortran
+!$acc kernels loop gang
+do i = 1, N
+    !$acc loop vector(31)
+    do j = 1, M
+        < loop code >
+    end do
+end do
+```
+
+#### Implementing the Gang Worker Vector
+
+Use the following link to edit our code. Replace our ealier clauses with **gang, worker, and vector** To reorganize our thread blocks. Try it using a few different numbers, but always keep the vector length as a **multiple of 32** to fully utilize **warps**.
+
+[laplace2d.f90](laplace2d.f90)  
+(make sure to save your code with ctrl+s)
+
+Then run the following script to see how the code runs.
+
+
+```sh
+!pgfortran -ta=tesla:cc30 -Minfo=accel -o laplace_gang_worker_vector jacobi.f90 laplace2d.f90 && ./laplace_gang_worker_vector
+```
+
+## Using Everything we Learned
+
+Now that we have covered the various ways to edit our loops, apply this knowledge to our laplace code. Try mixing some of the loop clauses, and see how the loop optimizations will differ between the parallel and the kernels directive.
+
+You may run the following script to reset your code with the **kernels directive**.
+
+
+```sh
+!cp ./solutions/base_parallel/kernels/laplace2d.f90 ./laplace2d.f90 && echo "Reset Finished"
+```
+
+You may run the following script to reset your code with the **parallel directive**.
+
+
+```sh
+!cp ./solutions/base_parallel/parallel/laplace2d.f90 ./laplace2d.f90 && echo "Reset Finished"
+```
+
+Then use the following link to edit our laplace code.
+
+[laplace2d.f90](laplace2d.f90)  
+(make sure to save your code with ctrl+s)
+
+Then run the following script to see how the code runs.
+
+
+```sh
+!pgfortran -ta=tesla:cc30 -Minfo=accel -o laplace jacobi.f90 laplace2d.f90 && ./laplace
+```
+
+---
 
 ## Conclusion
 
-After completing the above steps for each of the 3 important routines your application should show a speed-up over the unaccelerated version. You can verify this by removing the `-ta` flag from your compiler options. 
+Our primary goal when using OpenACC is to parallelize our large for loops. To accomplish this, we must use the OpenACC loop directive and loop clauses. There are many ways to alter and optimize our loops, though it is up to the programmer to decide which route is the best to take. At this point in the lab series, you should be able to begin parallelizing your own personal code, and to be able to achieve a relatively high performance using OpenACC.
 
-If you have code like what is in the `solution.kernels` or `solution.parallel` directories, you should see a roughly 14% speed-up over the CPU version.  If you were to use a GPU such as a K40 vs the K520 in this g2.2xlarge instance, you can get speeds closer to 8.4 seconds!  Here's a table showing the speeds on different CPUs and GPUs:
-
-| Processor | Time |
-| --------- | ---- |
-| Haswell CPU  | 30.519176 | 
-| K40 GPU      | 8.460459 | 
-| g2.2xlarge CPU | 36.647187 |
-| g2.2xlarge GPU | 32.084089 |
-
-In the next lecture and lab we will replace CUDA Unified Memory with explicit memory management using OpenACC and then further optimize the loops using the OpenACC `loop` directive.
+---
 
 ## Bonus Task
 
-1. If you used the `kernels` directive to express the parallelism in the code,
-try again with the `parallel loop` directive. Remember, you will need to take
-responsibility of identifying any reductions in the code. If you used 
-`parallel loop`, try using `kernels` instead and observe the differences both in
-developer effort and performance.
+If you would like some additional lessons on using OpenACC, there is an Introduction to OpenACC video series available from the OpenACC YouTube page. If you haven't already, I recommend watching this 6 part series. Each video is under 10 minutes, and will give a visual, and hands-on look at a lot of the material we have covered in these labs. The following link will bring you to Part 1 of the series.
+
+[Introduction to Parallel Programming with OpenACC - Part 1](https://youtu.be/PxmvTsrCTZg)  
 
