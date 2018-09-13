@@ -8,3 +8,5 @@ core
 desktop.ini
 __MACOSX
 .DS_Store
+*.o
+*.mod
