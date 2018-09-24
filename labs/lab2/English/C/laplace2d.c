@@ -44,10 +44,9 @@ void initialize(double *restrict A, double *restrict Anew, int m, int n)
 double calcNext(double *restrict A, double *restrict Anew, int m, int n)
 {
     double error = 0.0;
-    #pragma acc parallel loop copy(A[:m*n],Anew[:m*n])
+    #pragma acc parallel loop
     for( int j = 1; j < n-1; j++)
     {
-        #pragma acc loop
         for( int i = 1; i < m-1; i++ )
         {
             Anew[OFFSET(j, i, m)] = 0.25 * ( A[OFFSET(j, i+1, m)] + A[OFFSET(j, i-1, m)]
@@ -60,10 +59,9 @@ double calcNext(double *restrict A, double *restrict Anew, int m, int n)
         
 void swap(double *restrict A, double *restrict Anew, int m, int n)
 {
-    #pragma acc parallel loop copy(A[:m*n],Anew[:m*n])
+    #pragma acc parallel loop
     for( int j = 1; j < n-1; j++)
     {
-        #pragma acc loop
         for( int i = 1; i < m-1; i++ )
         {
             A[OFFSET(j, i, m)] = Anew[OFFSET(j, i, m)];    
