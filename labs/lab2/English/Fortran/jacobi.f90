@@ -57,7 +57,7 @@ program jacobi
     call swap(A, Anew, m, n)
 
     if(mod(iter,100).eq.0 ) write(*,'(i5,f10.6)'), iter, error
-	
+
     iter = iter + 1
 
   end do
@@ -65,5 +65,5 @@ program jacobi
   call cpu_time(stop_time) 
   write(*,'(a,f10.3,a)')  ' completed in ', stop_time-start_time, ' seconds'
 
-  ! deallocate (A,Anew)
+  deallocate (A,Anew)
 end program jacobi
