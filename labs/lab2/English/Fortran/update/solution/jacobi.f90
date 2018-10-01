@@ -28,21 +28,14 @@ program jacobi
   use laplace2d
   implicit none
   integer, parameter :: fp_kind=kind(1.0d0)
-  integer, parameter :: n=4096, m=4096, iter_max=1000
+  integer, parameter :: n=10, m=10, iter_max=1000
   integer :: i, j, iter
   real(fp_kind), dimension (:,:), allocatable :: A, Anew
   real(fp_kind) :: tol=1.0e-6_fp_kind, error=1.0_fp_kind
   real(fp_kind) :: start_time, stop_time
 
-  ! allocate ( A(0:n-1,0:m-1), Anew(0:n-1,0:m-1) )
+  allocate ( A(0:n-1,0:m-1), Anew(0:n-1,0:m-1) )
 
-  ! A    = 0.0_fp_kind
-  ! Anew = 0.0_fp_kind
-
-  ! Set B.C.
-  ! A(0,:)    = 1.0_fp_kind
-  ! Anew(0,:) = 1.0_fp_kind
-  
   call initialize(A, Anew, m, n)
    
   write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', n, ' x', m, ' mesh'
@@ -56,8 +49,16 @@ program jacobi
     error = calcNext(A, Anew, m, n)
     call swap(A, Anew, m, n)
 
-    if(mod(iter,100).eq.0 ) write(*,'(i5,f10.6)'), iter, error
-	
+    if(mod(iter,100).eq.0 ) then
+      write(*,'(i5,f10.6)'), iter, error
+      !acc update self(A(n,m))
+      do i=1,n 
+        do j=1,m 
+          write(*,'(f10.2)', advance="no"), A(i,j) 
+        enddo 
+      enddo
+    end if
+
     iter = iter + 1
 
   end do
@@ -65,5 +66,5 @@ program jacobi
   call cpu_time(stop_time) 
   write(*,'(a,f10.3,a)')  ' completed in ', stop_time-start_time, ' seconds'
 
-  ! deallocate (A,Anew)
+  deallocate (A,Anew)
 end program jacobi

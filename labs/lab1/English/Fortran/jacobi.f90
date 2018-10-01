@@ -34,15 +34,6 @@ program jacobi
   real(fp_kind) :: tol=1.0e-6_fp_kind, error=1.0_fp_kind
   real(fp_kind) :: start_time, stop_time
 
-  ! allocate ( A(0:n-1,0:m-1), Anew(0:n-1,0:m-1) )
-
-  ! A    = 0.0_fp_kind
-  ! Anew = 0.0_fp_kind
-
-  ! Set B.C.
-  ! A(0,:)    = 1.0_fp_kind
-  ! Anew(0,:) = 1.0_fp_kind
-  
   call initialize(A, Anew, m, n)
    
   write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', n, ' x', m, ' mesh'
