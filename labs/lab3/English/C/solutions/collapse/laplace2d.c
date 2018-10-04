@@ -40,13 +40,12 @@ void initialize(double *restrict A, double *restrict Anew, int m, int n)
         Anew[i] = 1.0;
     }
 
-    #pragma acc enter data copyin(A[:m*n],Anew[:m*n])
 }
 
 double calcNext(double *restrict A, double *restrict Anew, int m, int n)
 {
     double error = 0.0;
-    #pragma acc parallel loop collapse(2) present(A,Anew)
+    #pragma acc parallel loop reduction(max:error) copyin(A[:n*m]) copyout(Anew[:n*m]) collase(2)
     for( int j = 1; j < n-1; j++)
     {
         for( int i = 1; i < m-1; i++ )
@@ -61,7 +60,7 @@ double calcNext(double *restrict A, double *restrict Anew, int m, int n)
         
 void swap(double *restrict A, double *restrict Anew, int m, int n)
 {
-    #pragma acc parallel loop collapse(2) present(A,Anew)
+    #pragma acc parallel loop copyin(Anew[:n*m]) copyout(A[:n*m]) collase(2)
     for( int j = 1; j < n-1; j++)
     {
         for( int i = 1; i < m-1; i++ )
@@ -73,7 +72,6 @@ void swap(double *restrict A, double *restrict Anew, int m, int n)
 
 void deallocate(double *restrict A, double *restrict Anew)
 {
-    #pragma acc exit data delete(A,Anew)
     free(A);
     free(Anew);
 }

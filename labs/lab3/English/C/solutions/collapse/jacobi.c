@@ -67,6 +67,7 @@ int main(int argc, char** argv)
     double st = omp_get_wtime();
     int iter = 0;
    
+#pragma acc data copy(A[:n*m]) create(Anew[:n*m])
     while ( error > tol && iter < iter_max )
     {
         error = calcNext(A, Anew, m, n);
