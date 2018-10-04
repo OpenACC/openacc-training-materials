@@ -10,3 +10,4 @@ __MACOSX
 .DS_Store
 *.o
 *.mod
+a.out
