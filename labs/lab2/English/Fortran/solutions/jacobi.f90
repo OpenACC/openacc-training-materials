@@ -42,7 +42,7 @@ program jacobi
 
   iter=0
   
-  !$acc data copy(A(:)) create(Anew(:))
+  !$acc data copy(A(:,:)) create(Anew(:,:))
   do while ( error .gt. tol .and. iter .lt. iter_max )
 
     error = calcNext(A, Anew, m, n)

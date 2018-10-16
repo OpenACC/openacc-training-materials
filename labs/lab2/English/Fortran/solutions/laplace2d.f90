@@ -55,7 +55,7 @@ module laplace2d
 
       error=0.0_fp_kind
 
-      !$acc parallel loop reduction(max:error) copyin(A(:)) copyout(Anew(:))
+      !$acc parallel loop reduction(max:error) copyin(A(:,:)) copy(Anew(:,:))
       do j=1,m-2
         do i=1,n-2
           Anew(i,j) = 0.25_fp_kind * ( A(i+1,j  ) + A(i-1,j  ) + &
@@ -73,7 +73,7 @@ module laplace2d
       integer,intent(in)        :: m, n
       integer                   :: i, j
 
-      !$acc parallel loop copyin(Anew(:)) copyout(A(:))
+      !$acc parallel loop copyin(Anew(:,:)) copyout(A(:,:))
       do j=1,m-2
         do i=1,n-2
           A(i,j) = Anew(i,j)

@@ -4,10 +4,11 @@
 FROM nvcr.io/hpc/pgi-compilers:ce
 
 RUN apt update && \
-    apt install -y --no-install-recommends python3-pip python3-setuptools && \
+    apt install -y --no-install-recommends python3-pip python3-setuptools nginx && \
     rm -rf /var/lib/apt/lists/* && \
     pip3 install --no-cache-dir jupyter
+ADD docker-configs/default /etc/nginx/sites-available/default
 
 ADD labs/ /labs
 WORKDIR /labs
-CMD jupyter notebook --no-browser --allow-root --ip=$HOSTNAME --port=8888
+CMD service nginx start && jupyter notebook --no-browser --allow-root --ip=0.0.0.0 --port=8888 --NotebookApp.token="" --notebook-dir=/labs
