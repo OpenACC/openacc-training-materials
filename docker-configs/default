@@ -45,7 +45,6 @@ server {
 	# 	# as directory, then fall back to displaying a 404.
 	# 	try_files $uri $uri/ =404;
 	# }
-
         location /{
              proxy_pass http://localhost:8888;
              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -58,24 +57,23 @@ server {
              proxy_set_header Connection "upgrade";
              proxy_read_timeout 86400;
          }
-        location /module2 {
-          return 301 /notebooks/module2/README.ipynb;
-        }
-        location /module3 {
-          return 301 /notebooks/module3/README.ipynb;
-        }
-        location /module4 {
-          return 301 /notebooks/module4/README.ipynb;
-        }
-        location /module5 {
-          return 301 /notebooks/module5/README.ipynb;
-        }
-        location /module6 {
-          return 301 /notebooks/module6/README.ipynb;
-        }
-        #rewrite ^(/lab1)$ /notebooks/lab1/gLab1.ipynb last;
-        #rewrite ^(/lab2)$ /notebooks/lab2/gLab2.ipynb last;
-        #rewrite ^(/lab3)$ /notebooks/lab3/gLab3.ipynb last;
+
+        # FIXME
+        #location /module2 {
+        #  return 301 /notebooks/module2/README.ipynb;
+        #}
+        #location /module3 {
+        #  return 301 /notebooks/module3/README.ipynb;
+        #}
+        #location /module4 {
+        #  return 301 /notebooks/module4/README.ipynb;
+        #}
+        #location /module5 {
+        #  return 301 /notebooks/module5/README.ipynb;
+        #}
+        #location /module6 {
+        #  return 301 /notebooks/module6/README.ipynb;
+        #}
 
 	# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
 	#
