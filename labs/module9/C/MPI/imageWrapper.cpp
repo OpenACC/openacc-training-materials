@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
+#include <opencv/highgui.h>
 
 #include "imageWrapper.h"
 
@@ -19,7 +17,7 @@ unsigned char * readImage(const char* path, long& width, long& height, long& nch
   unsigned char *data = (unsigned char*) mat.data;
   width = mat.cols;
   height = mat.rows;
-  nchannels = mat.channels();
+  nchannels = 3;
 
   return data;
 }

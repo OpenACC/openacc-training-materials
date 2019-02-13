@@ -3,7 +3,7 @@
 #define MAX(X,Y) ((X>Y) ? X:Y)
 #define MIN(X,Y) ((X<Y) ? X:Y)
 
-void blur5(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -16,12 +16,10 @@ void blur5(unsigned restrict char *imgData, unsigned restrict char *out, long w,
      1,  2,  2,  2,  1,
      1,  1,  1,  1,  1
   };
-#pragma acc declare copyin(filter)
   // The denominator for scale should be the sum
   // of non-zero elements in the filter.
   double scale = 1.0 / 35.0;
-#pragma acc parallel loop copyin(imgData[:h*step]) copyout(out[:h*step]) \
- present(filter)
+#pragma acc parallel loop copyin(imgData[:h*step],filter) copyout(out[:h*step])
   for(y = 0; y < h; y++) {
 #pragma acc loop
     for(x = 0; x < w; x++) {
@@ -46,7 +44,13 @@ void blur5(unsigned restrict char *imgData, unsigned restrict char *out, long w,
   }
 }
 
-void blur5_serial(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+/*************************************************************************************
+ * Do not edit past this point                                                       *
+ *************************************************************************************/
+
+
+
+void blur5_serial(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -83,7 +87,7 @@ void blur5_serial(unsigned restrict char *imgData, unsigned restrict char *out, 
   }
 }
 
-void blur5_parallel(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_parallel(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -96,12 +100,10 @@ void blur5_parallel(unsigned restrict char *imgData, unsigned restrict char *out
      1,  2,  2,  2,  1,
      1,  1,  1,  1,  1
   };
-#pragma acc declare copyin(filter)
   // The denominator for scale should be the sum
   // of non-zero elements in the filter.
   double scale = 1.0 / 35.0;
-#pragma acc parallel loop copyin(imgData[:h*step]) copyout(out[:h*step]) \
- present(filter)
+#pragma acc parallel loop copyin(imgData[:h*step],filter) copyout(out[:h*step])
   for(y = 0; y < h; y++) {
 #pragma acc loop
     for(x = 0; x < w; x++) {

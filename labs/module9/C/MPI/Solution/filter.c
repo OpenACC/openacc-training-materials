@@ -5,7 +5,7 @@
 #define MAX(X,Y) ((X>Y) ? X:Y)
 #define MIN(X,Y) ((X<Y) ? X:Y)
 
-void blur5_mpi(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_mpi(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -55,15 +55,11 @@ void blur5_mpi(unsigned restrict char *imgData, unsigned restrict char *out, lon
   int ndevices = acc_get_num_devices(acc_device_default);
   acc_set_device_num(rank%ndevices, acc_device_default);
 
-  MPI_Scatterv((void*) imgData, sendcounts, senddispls, MPI_UNSIGNED_CHAR,
-   (void*) (imgData + copyLower*step), (int) copySize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(imgData, sendcounts, senddispls, MPI_UNSIGNED_CHAR,
+   &imgData[copyLower*step], (int) copySize, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
-#pragma acc enter data copyin(imgData[copyLower*step:copySize])
-#pragma acc enter data create(out[lower*step:size])
-#pragma acc enter data copyin(filter[:5][:5])
-#pragma acc parallel loop \
- present(imgData[copyLower*step:copySize], \
-  out[lower*step:size], filter[:5][:5])
+#pragma acc parallel loop copyin(imgData[copyLower*step:copySize], filter) \
+ copyout(out[lower*step:size])
   for(y = lower; y < upper; y++) {
 #pragma acc loop vector
     for(x = 0; x < w; x++) {
@@ -86,10 +82,8 @@ void blur5_mpi(unsigned restrict char *imgData, unsigned restrict char *out, lon
       out[y * step + x * ch + 2 ] = 255 - (scale * red);
     }
   }
-#pragma acc exit data copyout(out[lower*step:size]) \
- delete(imgData[copyLower*step:copySize], filter[:5][:5])
 
-  MPI_Gatherv((void*) (out+lower*step), (int) size, MPI_UNSIGNED_CHAR,
-   (void*) out, recvcounts, recvdispls, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(&out[lower*step], (int) size, MPI_UNSIGNED_CHAR,
+   out, recvcounts, recvdispls, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 }
 

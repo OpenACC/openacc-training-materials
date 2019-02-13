@@ -9,6 +9,7 @@ extern "C" {
   void blur5(unsigned char*, unsigned char*, long, long, long);
   void blur5_serial(unsigned char*, unsigned char*, long, long, long);
   void blur5_parallel(unsigned char*, unsigned char*, long, long, long);
+  void blur5_multi_device(unsigned char*, unsigned char*, long, long, long);
 }
 
 int main(int argc, char** argv)
@@ -25,9 +26,7 @@ int main(int argc, char** argv)
   unsigned char* output2 = new unsigned char[w*h*ch];
   unsigned char* output3 = new unsigned char[w*h*ch];
 
-  // Get rid of any overhead for runtimes
-  // Should replace with a dedicated function
-  blur5(data, output3, w, h, ch);
+  blur5_multi_device(data, output3, w, h, ch);
 
   double st = omp_get_wtime();
   blur5(data, output1, w, h, ch);
@@ -44,17 +43,18 @@ int main(int argc, char** argv)
 
   printf("Checking results for comparison...\n");
   bool success = true;
+  int counter = 0;
   for(int i = 0; i < w*h*ch; i++) {
     if(output1[i] != output2[i]) {
+      printf("Error at index %d: See %u, expected %u\n", i, output1[i], output2[i]);
       success = false;
-      break;
+      counter++;
+      if(counter > 10) break;
     }
   }
 
   if(success) {
     printf("Code results are correct.\n");
-  } else {
-    printf("Code results are incorrect.\n");
   }
 
   memcpy(data, output1, w*h*ch*sizeof(unsigned char));
