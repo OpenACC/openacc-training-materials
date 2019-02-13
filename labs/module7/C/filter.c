@@ -1,7 +1,8 @@
 #include <stdio.h>
 #define MAX(X,Y) ((X>Y) ? X:Y)
 #define MIN(X,Y) ((X<Y) ? X:Y)
-void blur5(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+
+void blur5(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -18,12 +19,8 @@ void blur5(unsigned restrict char *imgData, unsigned restrict char *out, long w,
   // The denominator for scale should be the sum
   // of non-zero elements in the filter.
   double scale = 1.0 / 35.0;
-
-#pragma acc enter data create(imgData[:h*step], out[:h*step])
-
-#pragma acc update device(imgData[:h*step])
-
-#pragma acc parallel loop present(imgData, out, filter)
+#pragma acc parallel loop copyin(imgData[:h*step]) copyout(out[:h*step]) \
+ present(filter)
   for(y = 0; y < h; y++) {
 #pragma acc loop
     for(x = 0; x < w; x++) {
@@ -46,14 +43,13 @@ void blur5(unsigned restrict char *imgData, unsigned restrict char *out, long w,
       out[y * step + x * ch + 2 ] = 255 - (scale * red);
     }
   }
-
-#pragma acc update self(out[:h*step])
-
-#pragma acc exit data delete(imgData)
-
 }
 
-void blur5_serial(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+/*******************************************************************************
+ * Do not edit anything past this point                                        *
+ *******************************************************************************/
+
+void blur5_serial(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -90,7 +86,7 @@ void blur5_serial(unsigned restrict char *imgData, unsigned restrict char *out, 
   }
 }
 
-void blur5_parallel(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_parallel(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
