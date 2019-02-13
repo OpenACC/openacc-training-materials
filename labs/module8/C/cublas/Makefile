@@ -3,6 +3,9 @@ CUDAC=nvcc
 CFLAGS=-ta=tesla:cc35 -Minfo=accel
 CUDAFLAGS=-Mcuda
 
+all: clean build
+	./main
+
 build: main.o matmult.o matmult_cublas.o
 	$(CC) $(CFLAGS) -o main -lcublas main.o matmult.o matmult_cublas.o $(CUDAFLAGS)
 
@@ -19,4 +22,4 @@ run:
 	./main
 
 clean:
-	rm *.o main
+	-rm -f *.o main

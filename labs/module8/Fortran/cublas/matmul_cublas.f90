@@ -5,30 +5,10 @@ contains
       use cublas
 
       integer :: m, n, k
-!      integer :: AllocateStatus
-      !real, device, allocatable :: A(:,:)
-      !real, device, allocatable :: B(:,:)
-      !real, device, allocatable :: D(:,:)
 
       real, device, intent(in) :: A(:,:)
       real, device, intent(in) :: B(:,:)
       real, device, intent(out) :: D(:,:)
-
-
-!      real, device, allocatable :: A_d(:,:)
-!      real, device, allocatable :: B_d(:,:)
-!      real, device, allocatable :: D_d(:,:)
-
-      
-      ! sourced allocation here allocates A_d to be the same size as A, and initializes
-      ! the contents of A_d with values in A, i.e. is does the host2device transfer
-!      allocate( A_d, source = A, stat = AllocateStatus)
-!      IF (AllocateStatus /= 0) STOP "*** Not enough memory for A_d on device ***"
-!      allocate( B_d, source = B, stat = AllocateStatus)
-!      IF (AllocateStatus /= 0) STOP "*** Not enough memory for B_d on device ***"
-      ! allocation with mold= just does the allocation but not the initialization
-!      allocate( D_d, mold = D, stat = AllocateStatus)
-!      IF (AllocateStatus /= 0) STOP "*** Not enough memory for D_d on device ***"
 
 ! CALL SGEMM(transa, transb, l, n, m, alpha, a, lda, b, ldb, beta, ldc)
 !
