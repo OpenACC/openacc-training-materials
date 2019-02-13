@@ -31,22 +31,25 @@ program main
    allocate( D(m,n), stat = AllocateStatus)
    IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
 
+   call srand(0)
 
    do i=1,m
       do j=1,k
-         A(i,j) = real(i+j)
+         A(i,j) = rand()
       enddo
    enddo
 
    do i=1,k
       do j=1,n
-         B(i,j) = real(i+j)
+         B(i,j) = rand()
       enddo
    enddo
 
    call matmul(A, B, C, m, n, k);
 
+!$acc data copyin(A, B) copyout(D)
    call matmul_cublas(A, B, D, m, n, k)
+!$acc end data
       
    ! Check accuracy
    write(*,*) 'maxval(abs(C-D)): ',maxval(abs(C-D))

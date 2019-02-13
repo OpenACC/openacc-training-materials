@@ -34,7 +34,15 @@ program main
    A(:,:) = 1
    B(:,:) = 0
 
+   call acc_map_data(A, A_d)
+   call acc_map_data(B, B_d)
+   call acc_map_data(C, C_d)
+
    call dot_acc(A_d,B_d,C_d,m,n)
+
+   call acc_unmap_data(A)
+   call acc_unmap_data(B)
+   call acc_unmap_data(C)
 
    C = C_d
 

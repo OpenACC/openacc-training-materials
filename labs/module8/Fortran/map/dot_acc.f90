@@ -10,7 +10,7 @@ contains
       integer :: i, j
       real temp
  
-!$acc parallel loop gang private(temp) copyin(A,B) copyout(C)
+!$acc parallel loop gang private(temp) present(A, B, C)
       do j = 1,m
          temp = 0.0
 !$acc loop vector reduction(+:temp)

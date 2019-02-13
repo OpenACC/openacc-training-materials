@@ -35,6 +35,6 @@ extern "C" void dot_cuda(int *A, int *B, int *C, int m, int n)
 {
 	int size = min(512,n);
 	dot_kernel<<<m,size,size*sizeof(int)>>>(A,B,C,m,n);
-	cudaThreadSynchronize();
+	cudaDeviceSynchronize();
 
 }
