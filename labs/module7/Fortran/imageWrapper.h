@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <opencv/highgui.h>
+#include <opencv/highgui.h>
 
-extern "C" unsigned char * readImage(const char*, long&, long&, long&);
-extern "C" void writeImage(const char*);
+unsigned char * readImage(const char*, long&, long&, long&);
+void writeImage(const char*);
 
 #endif

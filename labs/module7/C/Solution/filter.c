@@ -1,7 +1,7 @@
 #include <stdio.h>
 #define MAX(X,Y) ((X>Y) ? X:Y)
 #define MIN(X,Y) ((X<Y) ? X:Y)
-void blur5_serial(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_serial(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -38,7 +38,7 @@ void blur5_serial(unsigned restrict char *imgData, unsigned restrict char *out, 
   }
 }
 
-void blur5_parallel(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_parallel(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -81,7 +81,7 @@ void blur5_parallel(unsigned restrict char *imgData, unsigned restrict char *out
   }
 }
 
-void blur5_blocked(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_blocked(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -103,6 +103,7 @@ void blur5_blocked(unsigned restrict char *imgData, unsigned restrict char *out,
 #pragma acc enter data copyin(imgData[:w*h*ch])
 
   const long numBlocks = 32;
+  const long rowsPerBlock = (h+(numBlocks-1))/numBlocks;
   for(long block = 0; block < numBlocks; block++) {
     long lower = block*rowsPerBlock;
     long upper = MIN(h, lower+rowsPerBlock);
@@ -135,7 +136,7 @@ void blur5_blocked(unsigned restrict char *imgData, unsigned restrict char *out,
 
 }
 
-void blur5_blocked_with_data(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_blocked_with_data(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -194,7 +195,7 @@ void blur5_blocked_with_data(unsigned restrict char *imgData, unsigned restrict 
 #pragma acc exit data delete(imgData, out)
 }
 
-void blur5_pipelined(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5_pipelined(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;

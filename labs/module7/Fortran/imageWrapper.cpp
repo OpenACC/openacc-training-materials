@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-//#include <opencv2/highgui.hpp>
-//#include <opencv/highgui.h>
-#include <opencv2/imgcodecs.hpp>
+#include <opencv/highgui.h>
 
 #include "imageWrapper.h"
 
@@ -10,7 +8,7 @@ using namespace cv;
 
 Mat mat;
 
-extern "C" unsigned char * readImage(const char* path, long& width, long& height, long& nchannels)
+unsigned char * readImage(const char* path, long& width, long& height, long& nchannels)
 {
   mat = imread(path, IMREAD_COLOR);
 
@@ -24,7 +22,7 @@ extern "C" unsigned char * readImage(const char* path, long& width, long& height
   return data;
 }
 
-extern "C" void writeImage(const char* path)
+void writeImage(const char* path)
 {
-  imwrite(std::string(path), mat);
+  imwrite(path, mat);
 }
