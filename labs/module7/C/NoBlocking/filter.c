@@ -1,7 +1,7 @@
 #include <stdio.h>
 #define MAX(X,Y) ((X>Y) ? X:Y)
 #define MIN(X,Y) ((X<Y) ? X:Y)
-void blur5(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+void blur5(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;

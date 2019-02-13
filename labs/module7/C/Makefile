@@ -1,18 +1,23 @@
 CC=pgcc
-CFLAGS=-fast -ta=tesla:cc60,pinned -Minfo=accel
+CFLAGS=-fast -ta=tesla:cc35,pinned -Minfo=accel
 CXX=pgc++
-CXXFLAGS=-fast -ta=tesla:cc60,pinned -Minfo=accel
+CXXFLAGS=-std=c++11 -fast -ta=tesla:cc35,pinned -Minfo=accel
+OPENCV_INCLUDE = -I/usa/efwright/opencv_build/include/opencv4/
+OPENCV_LIB     = -L/usa/efwright/opencv_build/lib/ -lopencv_highgui -lopencv_core -lopencv_imgproc
 
-all: filter.x
+all: run
 
-filter.x: imageWrapper.o filter.o main.o
-	$(CXX) $(CXXFLAGS) $^ -lopencv_highgui -lopencv_core -lm -o $@
+run: filter.x
+	./filter.x costarica.jpg out.jpg
+
+filter.x: imageWrapper.o Solution/filter_pipeline.o filter.o main.o
+	$(CXX) $(CXXFLAGS) $(OPENCV_INCLUDE) $^ $(OPENCV_LIB) -lm -o $@
 
 .SUFFIXES: .o .cpp .c
 .cpp.o: 
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(OPENCV_INCLUDE) $(OPENCV_LIB) -c -o $@ $<
 .c.o: 
 	$(CC) $(CFLAGS) -c -o $@ $<
 .PHONY: clean
 clean: 
-	-rm -f *.o core filter.x
+	-rm -f *.o core filter.x out.jpg

@@ -9,6 +9,7 @@ extern "C" {
   void blur5(unsigned char*, unsigned char*, long, long, long);
   void blur5_serial(unsigned char*, unsigned char*, long, long, long);
   void blur5_parallel(unsigned char*, unsigned char*, long, long, long);
+  void blur5_pipelined(unsigned char*, unsigned char*, long, long, long);
 }
 
 int main(int argc, char** argv)
@@ -25,6 +26,9 @@ int main(int argc, char** argv)
   unsigned char* output2 = new unsigned char[w*h*ch];
   unsigned char* output3 = new unsigned char[w*h*ch];
 
+  // Pre-run to get rid of overhead
+  blur5_pipelined(data, output1, w, h, ch);
+
   double st = omp_get_wtime();
   blur5(data, output1, w, h, ch);
   printf("Time taken for blur5: %.4f seconds\n", omp_get_wtime()-st);
@@ -40,18 +44,22 @@ int main(int argc, char** argv)
 
   printf("Checking results for comparison...\n");
   bool success = true;
+  int counter = 0;
   for(int i = 0; i < w*h*ch; i++) {
     if(output1[i] != output2[i]) {
+      printf("Error at index %d: See %u, expected %u\n", i, output1[i], output2[i]);
       success = false;
-      break;
+      counter++;
+      if(counter > 10) break;
     }
   }
 
   if(success) {
-    printf("Results are equal.\n");
-  } else {
-    printf("Results are not equal.\n");
+    printf("Code results are correct.\n");
   }
+
+  memcpy(data, output1, w*h*ch*sizeof(unsigned char));
+  writeImage(argv[2]);
 
   delete[] output1;
   delete[] output2;

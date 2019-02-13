@@ -50,14 +50,16 @@ module filter_f90
       integer(kind=c_long),value :: w, h, c
       integer(kind=c_long) :: x, y, fx, fy, ix, iy
       real(8) :: blue, green, red
-
+!$acc parallel loop collapse(2) copyin(imgData) copyout(outImg) private(red, blue, green, ix, iy)
       do y=1, h
         do x=1, w
           red   = 0.0
           blue  = 0.0
           green = 0.0
+!$acc loop seq
           do fy=1, filtersize
             iy = y - (filtersize/2) + fy - 1
+!$acc loop seq
             do fx=1, filtersize
               ix = x - (filtersize/2) + fx - 1
               if ( (iy > 0) .and. (ix > 0) .and. &
@@ -75,7 +77,7 @@ module filter_f90
       enddo
     end subroutine
 
-    subroutine blur5_blocked_no_data(imgData, outImg, w, h, c)
+    subroutine blur5_blocked(imgData, outImg, w, h, c)
       use iso_c_binding
       implicit none
       integer(kind=c_char),dimension(c,w,h)     :: imgData, outImg
@@ -119,7 +121,7 @@ module filter_f90
       !$acc end data
     end subroutine
 
-    subroutine blur5_blocked(imgData, outImg, w, h, c)
+    subroutine blur5_blocked_with_data(imgData, outImg, w, h, c)
       use iso_c_binding
       implicit none
       integer(kind=c_char),dimension(c,w,h)     :: imgData, outImg
@@ -171,7 +173,7 @@ module filter_f90
       !$acc end data
     end subroutine
 
-    subroutine blur5_pipeline(imgData, outImg, w, h, c)
+    subroutine blur5_pipelined(imgData, outImg, w, h, c)
       use iso_c_binding
       implicit none
       integer(kind=c_char),dimension(c,w,h)     :: imgData, outImg
