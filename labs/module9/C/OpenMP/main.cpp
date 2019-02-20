@@ -9,6 +9,7 @@ extern "C" {
   void blur5(unsigned char*, unsigned char*, long, long, long);
   void blur5_serial(unsigned char*, unsigned char*, long, long, long);
   void blur5_parallel(unsigned char*, unsigned char*, long, long, long);
+  void blur5_openmp(unsigned char*, unsigned char*, long, long, long);
 }
 
 int main(int argc, char** argv)
@@ -26,8 +27,7 @@ int main(int argc, char** argv)
   unsigned char* output3 = new unsigned char[w*h*ch];
 
   // Get rid of any overhead for runtimes
-  // Should replace with a dedicated function
-  blur5(data, output3, w, h, ch);
+  blur5_openmp(data, output3, w, h, ch);
 
   double st = omp_get_wtime();
   blur5(data, output1, w, h, ch);
@@ -63,7 +63,6 @@ int main(int argc, char** argv)
   delete[] output1;
   delete[] output2;
   delete[] output3;
-  delete[] output4;
 
   return 0;
 }

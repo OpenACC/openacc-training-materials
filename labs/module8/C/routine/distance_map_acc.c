@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#pragma acc routine seq
 extern float dist_cuda(float, float);
 
 #pragma acc routine seq
