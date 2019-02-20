@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <openacc.h>
 #define MAX(X,Y) ((X>Y) ? X:Y)
 #define MIN(X,Y) ((X<Y) ? X:Y)
-#include <openacc.h>
-void blur5_multi_device(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
+
+void blur5_multi_device(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -21,7 +22,6 @@ void blur5_multi_device(unsigned restrict char *imgData, unsigned restrict char 
   double scale = 1.0 / 35.0;
 
   int ndevices = acc_get_num_devices(acc_device_default);
-  printf("Found %d devices\n", ndevices);
   long rows_per_device = (h+(ndevices-1))/ndevices;
 
   long lower;
@@ -43,7 +43,6 @@ void blur5_multi_device(unsigned restrict char *imgData, unsigned restrict char 
 
   for(int device = 0; device < ndevices; device++) {
     acc_set_device_num(device, acc_device_default);
-    printf("Launching device %d\n", device);
 
     lower = device*rows_per_device;
     upper = MIN(lower + rows_per_device, h);
@@ -90,4 +89,5 @@ void blur5_multi_device(unsigned restrict char *imgData, unsigned restrict char 
  imgData[copyLower*step:(copyUpper-copyLower)*step], filter)
   }
 }
+
 

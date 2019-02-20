@@ -10,6 +10,7 @@ extern "C" {
   void blur5(unsigned char*, unsigned char*, long, long, long);
   void blur5_serial(unsigned char*, unsigned char*, long, long, long);
   void blur5_parallel(unsigned char*, unsigned char*, long, long, long);
+  void blur5_mpi(unsigned char*, unsigned char*, long, long, long);
 }
 
 int main(int argc, char** argv)
@@ -43,9 +44,8 @@ int main(int argc, char** argv)
   unsigned char* output2 = new unsigned char[w*h*ch];
   unsigned char* output3 = new unsigned char[w*h*ch];
 
-  // Running to get rid of overhead for timing
-  // Should replace with dedicated function
-  blur5(data, output3, w, h, ch);
+  // Remove any overhead
+  blur5_mpi(data, output3, w, h, ch);
 
   double st;
   if(rank == 0) st = omp_get_wtime();
@@ -63,18 +63,18 @@ int main(int argc, char** argv)
     printf("Time taken for baseline parallel blur5: %.4f seconds\n", omp_get_wtime()-st);
 
     printf("Checking results for comparison...\n");
+    int count = 0;
     bool success = true;
     for(int i = 0; i < w*h*ch; i++) {
       if(output1[i] != output2[i]) {
         success = false;
-        break;
+        count++;
+        if(count > 10) break;
       }
     }
 
     if(success) {
       printf("Results are equal.\n");
-    } else {
-      printf("Results are not equal.\n");
     }
   }
 

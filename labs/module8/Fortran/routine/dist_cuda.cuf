@@ -1,12 +1,10 @@
 module dist_cuda_m
 contains
-!$acc routine seq
    attributes(device) function dist_cuda(a, b)
+      !$acc routine seq
       real :: a, b
-      !real, intent(inout) :: c
 
       dist_cuda = sqrt(a*a + b*b)
-
    end function dist_cuda
 end module dist_cuda_m
 
