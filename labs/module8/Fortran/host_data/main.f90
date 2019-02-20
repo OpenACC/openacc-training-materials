@@ -42,7 +42,9 @@ program main
    ! call dot product on host
    call dot(A, B, C, m, n)
 
+!$acc data copyin(A, B) copyout(D)
    call dot_cuda(A, B, D, m, n)
+!$acc end data
 
    ! check answers
    write(*,*) 'maxval(abs(C-D)): ', maxval(abs(C-D))
