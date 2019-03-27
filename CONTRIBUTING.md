@@ -30,6 +30,8 @@ Please use the following style guidelines when making contributions.
 * Two-space indention, no tabs
 * To the extent possible, variable names should be descriptive
 * Fortran codes should use free-form source files
+* Fortran codes should not use implicit variable names and should use 
+  `implicit none`
 * The following file extensions should be used appropriately
   * C - `.c`
   * C++ - `.cpp`
@@ -57,7 +59,7 @@ A module should have the following directory structure:
 
 * The base of the module should contain a README.ipynb file with a brief
   introduction to the module and links to the individual labs for each
-  language and programming language available.
+  language translation and programming language available.
 * The base of the module should contain a `C` and `Fortran` subdirectory
   containing versions of the module for C/C++ and Fortran, respectively. Each
   of these directories should contain a directory for each language
