@@ -1,0 +1,48 @@
+program main
+   use openacc
+   use cudafor
+   use dot_m
+   use dot_acc_m
+
+   integer :: i, j, m, n
+   real, allocatable :: A(:,:)
+   real, allocatable :: B(:,:)
+   real, allocatable :: C(:)
+   real, allocatable :: D(:)
+   real, allocatable :: E(:)
+
+   real, device, allocatable :: A_d(:,:)
+   real, device, allocatable :: B_d(:,:)
+   real, device, allocatable :: C_d(:)
+
+   m = 4098
+   n = 4098
+
+   write(*,*) 'Running with m,n: ', m, n
+
+   ! malloc A to D
+   allocate(A(m,n))
+   allocate(B(m,n))
+   allocate(C(m))
+   allocate(D(m))
+
+   ! malloc device A to C
+   allocate(A_d(m,n))
+   allocate(B_d(m,n))
+   allocate(C_d(m))
+
+   A(:,:) = 1
+   B(:,:) = 0
+
+!$acc update device(A, B)
+
+   call dot_acc(A,B,C,m,n)
+
+!$acc update self(C)
+
+   call dot(A,B,D,m,n)
+
+   ! check answers
+   write(*,*) 'maxval(abs(C-D)): ', maxval(abs(C-D))
+
+end program
