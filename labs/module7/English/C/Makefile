@@ -1,5 +1,5 @@
 CC=pgcc
-CFLAGS=-fast -ta=tesla:cc35,pinned -Minfo=accel
+CFLAGS=-fast -ta=tesla:pinned -Minfo=accel
 CXX=pgc++
 CXXFLAGS=-std=c++11 -fast -ta=tesla:cc35,pinned -Minfo=accel
 OPENCV_INCLUDE = -I/usa/efwright/opencv_build/include/opencv4/
