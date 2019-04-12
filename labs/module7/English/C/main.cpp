@@ -27,14 +27,16 @@ int main(int argc, char** argv)
   unsigned char* output3 = new unsigned char[w*h*ch];
 
   // Pre-run to get rid of overhead
+  blur5_pipelined(data, output3, w, h, ch);
+
   double st = omp_get_wtime();
+  blur5(data, output2, w, h, ch);
+  printf("Time taken for blur5: %.4f seconds\n", omp_get_wtime()-st);
+
+  printf("Running serial and baseline parallel for comparison...\n");
+  st = omp_get_wtime();
   blur5_serial(data, output1, w, h, ch);
   printf("Time taken for serial blur5: %.4f seconds\n", omp_get_wtime()-st);
-  blur5_pipelined(data, output2, w, h, ch);
-
-  st = omp_get_wtime();
-  blur5(data, output1, w, h, ch);
-  printf("Time taken for blur5: %.4f seconds\n", omp_get_wtime()-st);
 
   st = omp_get_wtime();
   blur5_parallel(data, output3, w, h, ch);
