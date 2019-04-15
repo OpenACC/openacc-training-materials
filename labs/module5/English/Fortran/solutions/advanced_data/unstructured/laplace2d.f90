@@ -43,6 +43,7 @@ module laplace2d
 
       A(0,:)    = 1.0_fp_kind
       Anew(0,:) = 1.0_fp_kind
+      !$acc enter data copyin(A) create(Anew)
     end subroutine initialize
 	
     function calcNext(A, Anew, m, n)
@@ -86,7 +87,7 @@ module laplace2d
       integer, parameter :: fp_kind=kind(1.0d0)
       real(fp_kind),allocatable,intent(in) :: A
       real(fp_kind),allocatable,intent(in) :: Anew
-	  
+	  !$acc exit data delete(A,Anew)
 	  deallocate (A,Anew)
     end subroutine
 end module laplace2d
