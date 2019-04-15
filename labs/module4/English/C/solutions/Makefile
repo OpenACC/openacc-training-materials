@@ -1,5 +1,5 @@
 .PHONY: all seq multicore basic_data clean
-all: seq multicore kernels
+all: seq multicore basic_data
 
 seq:
 	make -C ./sequential
