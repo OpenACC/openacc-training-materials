@@ -65,13 +65,16 @@ double calcNext(double *restrict A, double *restrict Anew, int m, int n)
         
 void swap(double *restrict A, double *restrict Anew, int m, int n)
 {
-    #pragma acc parallel loop gang present(A,Anew)
-    for( int j = 1; j < n-1; j++)
+    #pragma acc parallel num_workers(4) vector_length(32) present(A,Anew)
     {
-        #pragma acc loop vector
-        for( int i = 1; i < m-1; i++ )
+        #pragma acc loop gang worker
+        for( int j = 1; j < n-1; j++)
         {
-            A[OFFSET(j, i, m)] = Anew[OFFSET(j, i, m)];    
+            #pragma acc loop vector
+            for( int i = 1; i < m-1; i++ )
+            {
+                A[OFFSET(j, i, m)] = Anew[OFFSET(j, i, m)];    
+            }
         }
     }
 }
