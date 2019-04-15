@@ -1,21 +1,14 @@
 F90=pgfortran
-F90FLAGS= -ta=tesla:cc35 -Minfo=accel
-MCUDA = -Mcuda=cc35 -Minfo=accel -ta=tesla:cc35
+F90FLAGS=-fast -ta=tesla -Minfo=accel
 
-all: clean main
+all: run
+
+run: main
 	./main
 
 main: ../dot.f90 dot_acc.f90 ../main.cuf
-	$(F90) $(MCUDA) -o $@ $^ 
+	$(F90) $(F90FLAGS) -Mcuda -lcublas $^ -o $@
 
-dot.o:
-	$(F90) $(F90FLAGS) -c dot.f90
-
-dot_acc.o:
-	$(F90) $(F90FLAGS) -c dot_acc.f90
-
-run:
-	./main
-
-clean:
-	-rm -rf *.o main *.mod
+.PHONY: clean
+clean: 
+	-rm -f *.o *.mod core main
