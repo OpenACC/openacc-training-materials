@@ -1,28 +1,25 @@
 CC=pgcc
+CFLAGS=-fast -ta=tesla -Minfo=accel
+CXX=pgc++
+CXXFLAGS=-std=c++11 -fast -ta=tesla -Minfo=accel
 CUDAC=nvcc
-CFLAGS=-ta=tesla:cc35 -Minfo=accel
-CUDAFLAGS=-Mcuda
+CUDAFLAGS=
 
-all: clean build
+all: run
+
+run: main
 	./main
 
-build: ../main.o ../distance_map.o distance_map_acc.o ../dist_cuda.o
-	$(CC) $(CFLAGS) -o main dist_cuda.o main.o distance_map.o distance_map_acc.o $(CUDAFLAGS)
+main: ../dist_cuda.o ../distance_map.o distance_map_acc.o ../main.o
+	$(CC) $(CFLAGS) $^ -o $@ -Mcuda
 
-main.o:
-	$(CC) $(CFLAGS) -c main.c
-
-distance_map.o:
-	$(CC) $(CFLAGS) -c distance_map.c
-
-distance_map_acc.o:
-	$(CC) $(CFLAGS) -c distance_map_acc.c
-
-dist_cuda.o:
-	$(CUDAC) -c -rdc=true dist_cuda.cu
-
-run:
-	./main
-
-clean:
-	-rm -f *.o main
+.SUFFIXES: .o .cpp .c .cu
+.cpp.o: 
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+.c.o: 
+	$(CC) $(CFLAGS) -c -o $@ $<
+.cu.o:
+	$(CUDAC) $(CUDAFLAGS) -c -rdc=true -o $@ $<
+.PHONY: clean
+clean: 
+	-rm -f *.o core main
