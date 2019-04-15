@@ -2,10 +2,10 @@
 all: kernels parallel
 
 kernels:
-	make -C ./base_parallel
+	make -C ./kernels
 
 parallel:
-	make -C ./collapse
+	make -C ./parallel
 
 clean: 
 	make clean -C ./kernels

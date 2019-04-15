@@ -54,7 +54,7 @@ module laplace2d
       real(fp_kind)               :: error
 	  
       error=0.0_fp_kind
-!$acc kernels loop gang present(A,Anew) independent
+!$acc kernels loop gang worker(4) present(A,Anew) independent
       do j=1,m-2
 !$acc loop vector(32) independent
         do i=1,n-2
@@ -73,9 +73,9 @@ module laplace2d
       integer,intent(in)        :: m, n
       integer                   :: i, j
 
-!$acc kernels loop present(A,Anew) independent
+!$acc kernels loop gang worker(4) present(A,Anew) independent
       do j=1,m-2
-!$acc loop independent
+!$acc loop vector(32) independent
         do i=1,n-2
           A(i,j) = Anew(i,j)
         end do

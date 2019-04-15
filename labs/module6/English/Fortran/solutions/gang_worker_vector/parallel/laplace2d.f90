@@ -54,8 +54,8 @@ module laplace2d
       real(fp_kind)               :: error
 	  
       error=0.0_fp_kind
-!$acc parallel vector_length(32) present(A,Anew)
-!$acc loop gang
+!$acc parallel num_workers(4) vector_length(32) present(A,Anew)
+!$acc loop gang worker
       do j=1,m-2
 !$acc loop vector
         do i=1,n-2
@@ -75,8 +75,8 @@ module laplace2d
       integer,intent(in)        :: m, n
       integer                   :: i, j
 
-!$acc parallel vector_length(32) present(A,Anew)
-!$acc loop gang
+!$acc parallel num_workers(4) vector_length(32) present(A,Anew)
+!$acc loop gang worker
       do j=1,m-2
 !$acc loop vector
         do i=1,n-2
