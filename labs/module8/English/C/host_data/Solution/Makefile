@@ -1,25 +1,25 @@
 CC=pgcc
+CFLAGS=-fast -ta=tesla -Minfo=accel
+CXX=pgc++
+CXXFLAGS=-std=c++11 -fast -ta=tesla -Minfo=accel
 CUDAC=nvcc
-CFLAGS=-ta=tesla:cc35 -Minfo=accel
-CUDAFLAGS=-Mcuda
+CUDAFLAGS=
 
-all: clean build
+all: run
+
+run: main
 	./main
 
-build: main.o ../dot.o ../dot_kernel.o
-	$(CC) $(CFLAGS) -o main main.o dot.o dot_kernel.o $(CUDAFLAGS)
+main: ../dot.o ../dot_kernel.o main.o
+	$(CC) $(CFLAGS) $^ -o $@ -Mcuda
 
-main.o:
-	$(CC) $(CFLAGS) -c main.c
-
-dot.o:
-	$(CC) $(CFLAGS) -c dot.c
-
-dot_kernel.o:
-	$(CUDAC) -c dot_kernel.cu
-
-run:
-	./main
-
-clean:
-	-rm -f *.o main
+.SUFFIXES: .o .cpp .c .cu
+.cpp.o: 
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+.c.o: 
+	$(CC) $(CFLAGS) -c -o $@ $<
+.cu.o:
+	$(CUDAC) $(CUDAFLAGS) -c -o $@ $<
+.PHONY: clean
+clean: 
+	-rm -f *.o core main
