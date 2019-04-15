@@ -43,7 +43,7 @@ int main()
         int success = 1;
         for( i = 0; i < m*n; i++ ) {
                 if( fabsf(C[i] - D[i]) > 0.001) {
-                        printf("Error at index %d, %.3f vs. %.3f\n", i$
+                        printf("Error at index %d, %.3f vs. %.3f\n", i, C[i], D[i]);
                         count++;
                         success = 0;
                         if(count > 10) break;
