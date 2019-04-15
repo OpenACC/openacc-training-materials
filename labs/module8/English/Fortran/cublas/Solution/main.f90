@@ -47,11 +47,11 @@ program main
 
    call matmul(A, B, C, m, n, k);
 
-!$acc enter data copyin(A(:), B(:)) create(D(:))
+!$acc data copyin(A, B) copyout(D)
 !$acc host_data use_device(A, B, D)
    call matmul_cublas(A, B, D, m, n, k)
 !$acc end host_data
-!$acc exit data delete(A, B) copyout(D(:))
+!$acc end data
       
    ! Check accuracy
    write(*,*) 'maxval(abs(C-D)): ',maxval(abs(C-D))
