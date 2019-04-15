@@ -45,12 +45,15 @@ module filter_f90
 
     subroutine blur5_parallel(imgData, outImg, w, h, c)
       use iso_c_binding
+      use iso_c_binding
       implicit none
       integer(kind=c_char),dimension(c,w,h)     :: imgData, outImg
       integer(kind=c_long),value :: w, h, c
       integer(kind=c_long) :: x, y, fx, fy, ix, iy
       real(8) :: blue, green, red
-!$acc parallel loop collapse(2) copyin(imgData) copyout(outImg) private(red, blue, green, ix, iy)
+
+!$acc parallel loop collapse(2) copyin(imgData) copyout(outImg) &
+!$acc private(red, blue, green, ix, iy)
       do y=1, h
         do x=1, w
           red   = 0.0
@@ -84,11 +87,12 @@ module filter_f90
       integer(kind=c_long),value :: w, h, c
       integer(kind=c_long) :: x, y, fx, fy, ix, iy
       real(8) :: blue, green, red
-      integer(kind=c_long) :: yblock, ystart, yend
+      integer(kind=c_long) :: yblock, ystart, yend, blockSize, numBlocks = 32
+      integer(kind=c_long) :: lastRow, lower, upper
 
       blockSize = (h + numBlocks - 1) / numBlocks
       lastrow = 0
-      !$acc data copyin(imgData) copyout(outImg)
+      !$acc data copyin(imgData(:,:,:)) copyout(outImg)
       do yblock = 0, numBlocks - 1
         ystart = yblock * blockSize + 1
         yend = min(ystart + blockSize, h)
@@ -137,7 +141,7 @@ module filter_f90
       do yblock = 0, numBlocks - 1
         ystart = yblock * blockSize + 1
         yend = min(ystart + blockSize, h)
-        lower = lastrow
+        lower = lastrow + 1
         upper = min(yend + (filtersize/2), h)
         if ( lower < upper ) then
           !$acc update device(imgData(:,:,lower:upper))
@@ -170,6 +174,7 @@ module filter_f90
         enddo
         !$acc update self(outImg(:,:,ystart:yend))
       enddo
+      !$acc wait
       !$acc end data
     end subroutine
 
@@ -189,7 +194,7 @@ module filter_f90
       do yblock = 0, numBlocks - 1
         ystart = yblock * blockSize + 1
         yend = min(ystart + blockSize, h)
-        lower = lastrow
+        lower = lastrow + 1
         upper = min(yend + (filtersize/2), h)
         if ( lower < upper ) then
           !$acc update device(imgData(:,:,lower:upper)) async(mod(yblock,2))

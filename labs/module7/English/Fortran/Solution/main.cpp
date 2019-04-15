@@ -10,13 +10,13 @@ extern "C" {
   void filter_f90_blur5_(unsigned char*, unsigned char*, long, long, long);
   void filter_f90_blur5_serial_(unsigned char*, unsigned char*, long, long, long);
   void filter_f90_blur5_parallel_(unsigned char*, unsigned char*, long, long, long);
-  void filter_pipeline_f90_blur5_pipelined_(unsigned char*, unsigned char*, long, long, long);
+  void filter_f90_blur5_pipelined_(unsigned char*, unsigned char*, long, long, long);
 }
 
 #define blur5 filter_f90_blur5_
 #define blur5_serial filter_f90_blur5_serial_
 #define blur5_parallel filter_f90_blur5_parallel_
-#define blur5_pipelined filter_pipeline_f90_blur5_pipelined_
+#define blur5_pipelined filter_f90_blur5_pipelined_
 
 int main(int argc, char** argv)
 {
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
   printf("Time taken for serial blur5: %.4f seconds\n", omp_get_wtime()-st);
 
   st = omp_get_wtime();
-  blur5_pipelined(data, output3, w, h, ch);
+  blur5_pipelined(data, output2, w, h, ch);
   printf("Time taken for pipelined blur5: %.4f seconds\n", omp_get_wtime()-st);
 
   printf("Checking results for comparison...\n");
