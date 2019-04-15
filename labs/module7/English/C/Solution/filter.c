@@ -136,7 +136,7 @@ void blur5_blocked(unsigned char *imgData, unsigned char *out, long w, long h, l
 
 }
 
-void blur5_blocked_with_data(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
+void blur5_blocked_with_data(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -153,15 +153,15 @@ void blur5_blocked_with_data(unsigned char *imgData, unsigned char *out, long w,
   // The denominator for scale should be the sum
   // of non-zero elements in the filter.
   double scale = 1.0 / 35.0;
-#pragma acc enter data create(imgData[:w*h*ch], out[:w*h*ch])
 
   const long numBlocks = 32;
   const long rowsPerBlock = (h+(numBlocks-1))/numBlocks;
   long lastRowCopied = 0; // Have not copied any rows yet
+#pragma acc data create(imgData[:h*step], out[:h*step])
   for(long block = 0; block < numBlocks; block++) {
     long lower = block*rowsPerBlock; // Compute Lower
     long upper = MIN(h, lower+rowsPerBlock); // Compute Upper
-    long copyLower = lastRowCopied+1; // Data copy lower
+    long copyLower = lastRowCopied; // Data copy lower
     long copyUpper = MIN(upper+(filtersize/2), h); // Data copy upper
     if(copyLower < copyUpper) {
 #pragma acc update device(imgData[copyLower*step:(copyUpper-copyLower)*step])
@@ -192,10 +192,9 @@ void blur5_blocked_with_data(unsigned char *imgData, unsigned char *out, long w,
     }
 #pragma acc update self(out[lower*step:(upper-lower)*step])
   }
-#pragma acc exit data delete(imgData, out)
 }
 
-void blur5_pipelined(unsigned char *imgData, unsigned char *out, long w, long h, long ch)
+void blur5_pipelined(unsigned restrict char *imgData, unsigned restrict char *out, long w, long h, long ch)
 {
   long step = w*ch;
   long x, y;
@@ -212,22 +211,21 @@ void blur5_pipelined(unsigned char *imgData, unsigned char *out, long w, long h,
   // The denominator for scale should be the sum
   // of non-zero elements in the filter.
   double scale = 1.0 / 35.0;
-#pragma acc enter data create(imgData[:w*h*ch], out[:w*h*ch])
 
   const long numBlocks = 32;
   const long rowsPerBlock = (h+(numBlocks-1))/numBlocks;
   long lastRowCopied = 0; // Have not copied any rows yet
+#pragma acc data create(imgData[:h*step], out[:h*step])
   for(long block = 0; block < numBlocks; block++) {
     long lower = block*rowsPerBlock; // Compute Lower
     long upper = MIN(h, lower+rowsPerBlock); // Compute Upper
-    long copyLower = lastRowCopied+1; // Data copy lower
+    long copyLower = lastRowCopied; // Data copy lower
     long copyUpper = MIN(upper+(filtersize/2), h); // Data copy upper
     if(copyLower < copyUpper) {
-#pragma acc update device(imgData[copyLower*step:(copyUpper-copyLower)*step]) async(5)
+#pragma acc update device(imgData[copyLower*step:(copyUpper-copyLower)*step]) async(block%2)
       lastRowCopied = copyUpper;
     }
-#pragma acc wait(5)
-#pragma acc parallel loop present(imgData, out) async(block%2)
+#pragma acc parallel loop present(imgData, out, filter) async(block%2)
     for(y = lower; y < upper; y++) {
 #pragma acc loop
       for(x = 0; x < w; x++) {
@@ -253,6 +251,5 @@ void blur5_pipelined(unsigned char *imgData, unsigned char *out, long w, long h,
 #pragma acc update self(out[lower*step:(upper-lower)*step]) async(block%2)
   }
 #pragma acc wait
-#pragma acc exit data delete(imgData, out)
 }
 

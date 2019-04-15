@@ -6,9 +6,10 @@
 #include "imageWrapper.h"
 
 extern "C" {
-  void blur5(unsigned char*, unsigned char*, long, long, long);
   void blur5_serial(unsigned char*, unsigned char*, long, long, long);
   void blur5_parallel(unsigned char*, unsigned char*, long, long, long);
+  void blur5_blocked(unsigned char*, unsigned char*, long, long, long);
+  void blur5_blocked_with_data(unsigned char*, unsigned char*, long, long, long);
   void blur5_pipelined(unsigned char*, unsigned char*, long, long, long);
 }
 
