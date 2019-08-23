@@ -57,7 +57,6 @@ program jacobi
     call swap(A, Anew, m, n)
 
     if(mod(iter,100).eq.0 ) write(*,'(i5,f10.6)'), iter, error
-	
     iter = iter + 1
 
   end do

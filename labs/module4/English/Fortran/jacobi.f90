@@ -26,6 +26,7 @@
 
 program jacobi
   use laplace2d
+  use nvtx_mod
   implicit none
   integer, parameter :: fp_kind=kind(1.0d0)
   integer, parameter :: n=4096, m=4096, iter_max=1000
@@ -53,8 +54,12 @@ program jacobi
   
   do while ( error .gt. tol .and. iter .lt. iter_max )
 
+    call nvtxstartrange('calc')
     error = calcNext(A, Anew, m, n)
+    call nvtxendrange()
+    call nvtxstartrange('swap')
     call swap(A, Anew, m, n)
+    call nvtxendrange()
 
     if(mod(iter,100).eq.0 ) write(*,'(i5,f10.6)'), iter, error
 	
