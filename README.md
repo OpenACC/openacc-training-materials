@@ -38,16 +38,16 @@ This module does not include a code lab.
 
 ### Module 2 – Profiling with OpenACC
 
-These modules are meant to be profiler-driven. Students will make small
-changes to their code, and re-profile it, comparing changes in the profiler vs.
-their expectations. Module 2 will have students profile the sequential
-Conjugate Gradient code to obtain baseline results. Afterwards, they will begin
-to implement a naïve parallelization of the code. The Conjugate Gradient code
-has 3 functions that are meant to be parallelized; students will add OpenACC
-directives to each of these functions, one-by-one, and view changes seen in the
-compiler. At this point, students are only expected to run their code for a
-multicore accelerator. The GPU implementation is more complex, and will be the
-focus of Module 3.
+These modules are meant to be profiler-driven. Students will make small changes
+to their code, and re-profile it, comparing changes in the profiler vs.  their
+expectations. [labs/module2](Module 2) will have students profile the
+sequential Laplace Heat Equation code to obtain baseline results. Afterwards,
+they will begin to implement a naïve parallelization of the code. The Laplace
+Heat Equation code has 3 functions that are meant to be parallelized; students
+will add OpenACC directives to each of these functions, one-by-one, and view
+changes seen in the compiler. At this point, students are only expected to run
+their code for a multicore accelerator. The GPU implementation is more complex,
+and will be the focus of Module 3.
 
 Topics that will be covered are as follows:
 * Compiling sequential and OpenACC code
@@ -66,10 +66,10 @@ programming model.” Students will begin working with GPUs in Module 4.
 
 ### Module 3 – Introduction to OpenACC Directives
 
-Students will have already seen the parallel, kernels, and loop directive at
-this point. Now, this module will focus on teaching the specifics of each
-directive, the differences between them, and how to use them to parallelize our
-code.
+In [labs/module3](Module 3) students will have already seen the parallel,
+kernels, and loop directive at this point. Now, this module will focus on
+teaching the specifics of each directive, the differences between them, and how
+to use them to parallelize our code.
 
 Topics that will be covered are as follows:
 * The Parallel directive
@@ -86,12 +86,12 @@ optimal version of a multicore Laplace program.
 
 ### Module 4 – GPU Programming with OpenACC
   
-This module is designed to teach students the key differences between GPUs
-and multicore CPUs. We also delve into GPU memory management, mostly from a
-conceptual level. We present CUDA Unified Memory as a reasonable solution to
-memory management, and then finish the module with a guide to GPU profiling
-using PGPROF. We also draw parallels between GPU architecture and our OpenACC
-general parallel model.
+[labs/module4](Module 4) is designed to teach students the key differences
+between GPUs and multicore CPUs. We also delve into GPU memory management,
+mostly from a conceptual level. We present CUDA Unified Memory as a reasonable
+solution to memory management, and then finish the module with a guide to GPU
+profiling using PGPROF. We also draw parallels between GPU architecture and our
+OpenACC general parallel model.
   
 The lab section will allow students to play with basic data clauses, and
 managed memory. Then they will profile the code, and see how the changes they
@@ -107,11 +107,12 @@ Topics that will be covered are as follow:
 Module 5 – Data Management with OpenACC
 
 In Module 4, we introduced students to a very basic solution to GPU data
-management. At the beginning of Module 5, we highlight the problems that this
-basic implementation has. The problem with our naïve solution is that there is
-far too many data transfers between the compute regions. Our program takes more
-time transferring data than it does computing our answer. We will have students
-remedy this by using explicit data management with the OpenACC data directive.
+management. At the beginning of [labs/module5](Module 5), we highlight the
+problems that this basic implementation has. The problem with our naïve
+solution is that there is far too many data transfers between the compute
+regions. Our program takes more time transferring data than it does computing
+our answer. We will have students remedy this by using explicit data management
+with the OpenACC data directive.
 
 Topics that will be covered are as follows:
 * OpenACC data directive/clauses
@@ -128,13 +129,13 @@ in their Laplace code.
 
 ### Module 6 – Loop Optimizations with OpenACC
   
-Module 6 is the last “core” module. After Module 6, we expect students to be
-able to begin parallelizing their own personal code with OpenACC with a good
-amount of confidence. The remaining modules after this point are considered to
-be “advanced” modules, and are optional, and some may only be applicable to
-specific audiences. Module 6 is all about loop clauses. This module is meant be
-very visual, so that students can get a good sense of exactly how each clause
-is affecting the execution of their loop.
+[labs/module6](Module 6) is the last “core” module. After Module 6, we expect
+students to be able to begin parallelizing their own personal code with OpenACC
+with a good amount of confidence. The remaining modules after this point are
+considered to be “advanced” modules, and are optional, and some may only be
+applicable to specific audiences. Module 6 is all about loop clauses. This
+module is meant be very visual, so that students can get a good sense of
+exactly how each clause is affecting the execution of their loop.
 
 Topics that will be covered are as follows:
 * Seq/Auto clause
