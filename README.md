@@ -1,4 +1,4 @@
-# OpenACC Official Traning Materials.
+# OpenACC Official Training Materials
 These training materials have been developed as a collaboration between the
 University of Delaware and NVIDIA Corporation and are provided free of charge
 by OpenACC.org. Please see [CONTRIBUTING.md] for license details.
