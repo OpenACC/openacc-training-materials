@@ -10,3 +10,11 @@ __MACOSX
 .DS_Store
 *.o
 *.mod
+exe
+a.out
+*.pdf
+*.qdstrm
+*.qdrep
+*.nvprof
+*.nvvp
+*.zip

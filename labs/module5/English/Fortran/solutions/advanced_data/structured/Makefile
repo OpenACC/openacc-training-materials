@@ -2,10 +2,10 @@ CC=pgcc
 CXX=pgc++
 FC=pgfortran
 LD=pgfortran
-CFLAGS=-fast -ta=tesla:manged
-FFLAGS=-fast -ta=tesla:manged
-CXXFLAGS=-fast -ta=tesla:manged
-LDFLAGS=-fast -ta=tesla:manged
+CFLAGS=-fast -ta=multicore 
+FFLAGS=-fast -ta=multicore 
+CXXFLAGS=-fast -ta=multicore 
+LDFLAGS=-fast -ta=multicore 
 
 all: exe run
 
