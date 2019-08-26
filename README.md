@@ -104,7 +104,7 @@ Topics that will be covered are as follow:
 * CUDA Unified Memory
 * Profiling GPU applications
 
-Module 5 – Data Management with OpenACC
+### Module 5 – Data Management with OpenACC
 
 In Module 4, we introduced students to a very basic solution to GPU data
 management. At the beginning of [labs/module5](Module 5), we highlight the
