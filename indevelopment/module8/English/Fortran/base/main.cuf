@@ -1,0 +1,73 @@
+!
+! Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+!
+! Licensed under the Apache License, Version 2.0 (the "License");
+! you may not use this file except in compliance with the License.
+! You may obtain a copy of the License at
+!
+!     http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software
+! distributed under the License is distributed on an "AS IS" BASIS,
+! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+! See the License for the specific language governing permissions and
+! limitations under the License.
+!
+
+program main
+
+   use cudafor
+   use dot_m
+   use dot_acc_m
+   use dot_cuda_m
+
+   integer :: i, j, m, n
+   integer :: AllocateStatus
+   real, allocatable :: A(:,:)
+   real, allocatable :: B(:,:)
+   real, allocatable :: C(:)
+   real, allocatable :: D(:)
+   real, allocatable :: E(:)
+
+   m = 4099
+   n = 4101
+
+   write(*,*) 'Running with m,n: ', m, n
+   
+   allocate( A(m,n), stat = AllocateStatus)
+   IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+   allocate( B(m,n), stat = AllocateStatus)
+   IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+   allocate( C(n), stat = AllocateStatus)
+   IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+   allocate( D(n), stat = AllocateStatus)
+   IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+   allocate( E(n), stat = AllocateStatus)
+   IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+   call random_seed()
+   call random_number(A)
+   call random_number(B)
+   do j = 1,n 
+      do i = 1,m
+          A(i,j) = int(A(i,j)*10.0)
+          B(i,j) = int(B(i,j)*10.0)
+      end do
+   end do
+
+
+   
+   write(*,*) 'maxval(A), maxval(B): ',maxval(A), maxval(B)
+
+   call dot(A, B, C, m, n)
+   call dot_acc(A, B, D, m, n)
+   call dot_cuda(A, B, E, m, n)
+
+   write(*,*) 'maxval(abs(C-D)): ', maxval(abs(C-D))
+   write(*,*) 'maxval(abs(C-E)): ', maxval(abs(C-E))
+
+end program

@@ -8,3 +8,13 @@ core
 desktop.ini
 __MACOSX
 .DS_Store
+*.o
+*.mod
+exe
+a.out
+*.pdf
+*.qdstrm
+*.qdrep
+*.nvprof
+*.nvvp
+*.zip
