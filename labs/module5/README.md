@@ -1,7 +1,7 @@
 Data Management with OpenACC
 ============================
 
-This lab is meant to accompany Module 4 of the OpenACC.org teaching materials.
+This lab is meant to accompany Module 5 of the OpenACC.org teaching materials.
 The purpose of this lab is to introduce OpenACC data management directives. Lab
 instructions and source code is available for C/C++ and Fortran.
 
@@ -12,4 +12,4 @@ Please see the following files to begin the lab:
 
 Additional Resources
 --------------------
-* [Associated Slides](#)
+* [Associated Slides](https://drive.google.com/open?id=1GKnMRxC92KbZfPggxSupVbrsgFHn6ZTZ)
