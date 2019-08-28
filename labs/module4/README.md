@@ -12,4 +12,4 @@ Please see the following files to begin the lab:
 
 Additional Resources
 --------------------
-* [Associated Slides](#)
+* [Associated Slides](https://drive.google.com/open?id=1i4IzKgmerKwoNozu0gyznZk40Vy7Vsqr)
