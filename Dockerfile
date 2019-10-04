@@ -4,6 +4,7 @@
 FROM nvcr.io/hpc/pgi-compilers:ce
 
 RUN apt update && \
+    apt upgrade -y && \
     apt install -y --no-install-recommends python3-pip python3-setuptools nginx && \
     rm -rf /var/lib/apt/lists/* && \
     pip3 install --no-cache-dir jupyter && \
