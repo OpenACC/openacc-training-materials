@@ -160,7 +160,7 @@ student, it is necesary to expose port 8888 from the container, for instance,
 the following command would expose port 8888 inside the container as port 8888
 on the lab machine:
 
-    $ docker run -rm --it -p 8888:8888 openacc-teaching-materials:latest
+    $ docker run --runtime nvidia -rm --it -p 8888:8888 openacc-teaching-materials:latest
 
 When this command is run, a student can browse to the serving machine on port
 8888 using any web browser to access the labs. For instance, from if they are
