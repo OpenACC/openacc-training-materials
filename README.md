@@ -3,6 +3,18 @@ These training materials have been developed as a collaboration between the
 University of Delaware and NVIDIA Corporation and are provided free of charge
 by OpenACC.org. Please see [CONTRIBUTING.md] for license details.
 
+## System Requirements
+Before running the OpenAcc training materials which includes PGI Community Edition, please ensure that your system meets the following requirements.
+
+* Pascal (sm60), Volta (sm70) or Turing (sm75) NVIDIA GPU(s)
+* CUDA driver version
+    * &gt;= 396.26 &nbsp;&nbsp; for CUDA 9.2
+    * &gt;= 410.104 for CUDA 10.0
+    * &gt;= 418.39 &nbsp;&nbsp; for CUDA 10.1
+* [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) >= 2.0.3
+
+By default PGI compilers will automatically choose among CUDA Toolkit verions 9.2, 10.0 or 10.1 based on your installed driver. To specify a specific version of CUDA, set the CUDA_HOME environment variable to the path of the CUDA installation, e.g., CUDA_HOME=/usr/local/cuda-9.0.  See the [PGI 19.4 User's Guide](https://www.pgroup.com/resources/docs/19.4/x86/pgi-user-guide/index.htm?utm_campaign=ce&utm_source=ngc_pgi&utm_medium=website) for more infoation on using different [CUDA Toolkit Versions](https://www.pgroup.com/resources/docs/19.4/x86/pgi-user-guide/index.htm#cuda-toolkit-versions).
+
 ## Modules
 
 This material, which includes slides and code labs, is organized into modules
@@ -156,18 +168,25 @@ gang/worker/vector.
 
 The code labs have been written using Jupyter notebooks and a Dockerfile has
 been built to simplify deployment. In order to serve the docker instance for a
-student, it is necesary to expose port 8888 from the container, for instance,
-the following command would expose port 8888 inside the container as port 8888
+student, it is necessary to expose port 8000 from the container, for instance,
+the following command would expose port 8000 inside the container as port 8000
 on the lab machine:
 
-    $ docker run --runtime nvidia -rm --it -p 8888:8888 openacc-teaching-materials:latest
+    $ docker run --gpus all -rm --it -p 8000:8000 <image>:<tag>
 
 When this command is run, a student can browse to the serving machine on port
-8888 using any web browser to access the labs. For instance, from if they are
+8000 using any web browser to access the labs. For instance, from if they are
 running on the local machine the web browser should be pointed to
-http://localhost:8888. The `-rm` flag is used to clean an temporary images
-created during the running of the container and the `--it` flag enables killing
+http://localhost:8000. The `--gpus` flag is used to enable `all` NVIDIA GPUs 
+during container runtime. The `--rm` flag is used to clean an temporary images 
+created during the running of the container. The `-it` flag enables killing
 the jupyter server with `ctrl-c`. This command may be customized for your
 hosting environment.
+
+#### Useful flags:
+
+`--gpus` : Enable NVIDIA GPUs container runtime support
+`--cap-add`: Runtime privilege and add Linux capabilities. Use `SYS_ADMIN` if encoutering target device permission error when using PG profiler in VNC. 
+`--device`: container is given limited access to a specific device   
 
 Modules 4 - 6 require an NVIDIA GPU to be run without customization.

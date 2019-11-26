@@ -1,7 +1,9 @@
-# To run this dockerfile you need to present port 8000 and provide a hostname. 
+# To run this dockerfile you need to present port 8000 and provide a hostname.
 # For instance:
 #   $ docker run --runtime nvidia --rm -it -p "8000:8000" -e HOSTNAME=foo.example.com openacc-labs:latest
-FROM nvcr.io/hpc/pgi-compilers:ce
+FROM nvcr.io/hpc-publisher/internal/pgi-compilers:v19.10
+
+# PGI Tutorials
 
 ARG TURBOVNC_VERSION=2.2.1
 ARG VIRTUALGL_VERSION=2.6.1
@@ -29,8 +31,7 @@ RUN dpkg --add-architecture i386 && \
     libsm6 \
     libxv1 libxv1:i386 \
     make \
-    #python \
-    #python-numpy \
+    python-numpy \
     x11-xkb-utils \
     xauth \
     xfonts-base \
@@ -73,6 +74,28 @@ RUN \
         echo '/usr/local/${LIB}/libGL.so.1' >> /etc/ld.so.preload && \
         echo '/usr/local/${LIB}/libEGL.so.1' >> /etc/ld.so.preload
 
+####### glvnd ubuntu 18.04
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     	libglvnd0 libglvnd0:i386 \
+# 	libgl1 libgl1:i386 \
+# 	libglx0 libglx0:i386 \
+# 	libegl1 libegl1:i386 \
+# 	libgles2 libgles2:i386 && \
+#     rm -rf /var/lib/apt/lists/*
+
+
+# RUN echo "\
+# {
+#     "file_format_version" : "1.0.0",
+#     "ICD" : {
+#         "library_path" : "libEGL_nvidia.so.0"
+#     }
+# }
+# " > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
+
+# COPY 10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
+
+
 ############################################3
 # Configure desktop
 ENV DISPLAY :1
@@ -108,16 +131,17 @@ RUN cp /etc/xdg/xfce4/panel/default.xml /etc/xdg/xfce4/xfconf/xfce-perchannel-xm
 
 EXPOSE 5901
 
-
 #################################################33
 
 ADD docker-configs/default /etc/nginx/sites-available/default
 
 ADD labs/ /home/openacc/labs/
 WORKDIR /home/openacc/labs
-#CMD service nginx start && jupyter notebook --no-browser --allow-root --ip=0.0.0.0 --port=8889 --NotebookApp.token="" --notebook-dir=/labs & && /opt/websockify/run 5901 --web=/opt/noVNC --wrap-mode=ignore -- vncserver :1
 ADD scripts/entry_point.sh /home/openacc/entrypoint.sh
+
 RUN chmod +x /home/openacc/entrypoint.sh
 RUN touch /run/nginx.pid && chown -R openacc /home/openacc/ /var/lib/nginx /var/log/nginx /run/nginx.pid && (echo 'xfce4-session' > /home/openacc/.vnc/xstartup.turbovnc) && chmod 755 /home/openacc/.vnc/xstartup.turbovnc
+
 USER openacc
+
 ENTRYPOINT ["/home/openacc/entrypoint.sh"]
