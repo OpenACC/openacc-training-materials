@@ -1,9 +1,8 @@
+
 # To run this dockerfile you need to present port 8000 and provide a hostname.
 # For instance:
 #   $ docker run --runtime nvidia --rm -it -p "8000:8000" -e HOSTNAME=foo.example.com openacc-labs:latest
-FROM nvcr.io/hpc-publisher/internal/pgi-compilers:v19.10
-
-# PGI Tutorials
+FROM nvcr.io/hpc/pgi-compilers:ce
 
 ARG TURBOVNC_VERSION=2.2.1
 ARG VIRTUALGL_VERSION=2.6.1
@@ -12,18 +11,15 @@ ARG WEBSOCKIFY_VERSION=0.8.0
 ARG NOVNC_VERSION=1.0.0-beta
 ARG VNCPASSWORD=openacc
 
-
 RUN dpkg --add-architecture i386 && \
     apt update && \
-    apt upgrade -y && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository universe && \
-    apt update && \
-    apt install -y --no-install-recommends python3-pip python3-setuptools nginx zip \
-    build-essential \
-    gcc-multilib \
-    pkg-config \
+    apt install -y --no-install-recommends \
+    python3-pip \
+    python3-setuptools \
+    nginx \
+    zip \
     xfce4 \
+    dbus-x11 \	
     ca-certificates \
     curl \
     libc6-dev \
@@ -31,26 +27,20 @@ RUN dpkg --add-architecture i386 && \
     libsm6 \
     libxv1 libxv1:i386 \
     make \
+    python \
     python-numpy \
     x11-xkb-utils \
     xauth \
     xfonts-base \
     xkb-data \
-    firefox \
-    git \
-    nano \
-    vim \
-    emacs \
-    mousepad \
     xfce4-terminal \
-    python \
-    default-jdk \
+    openjdk-8-jdk \
     libxau-dev \
     libxdmcp-dev \
     libxcb1-dev \
     libxext-dev libxext-dev:i386 \
     libx11-dev libx11-dev:i386 && \
-    pip3 install --no-cache-dir jupyter numpy && \
+    pip3 install --no-cache-dir jupyter && \
     useradd -k /etc/skel -m -s /usr/local/bin/entrypoint.sh -p openacc openacc && \
     echo 'openacc:openacc' | chpasswd && \
     rm -rf /var/lib/apt/lists/* && \
@@ -74,28 +64,6 @@ RUN \
         echo '/usr/local/${LIB}/libGL.so.1' >> /etc/ld.so.preload && \
         echo '/usr/local/${LIB}/libEGL.so.1' >> /etc/ld.so.preload
 
-####### glvnd ubuntu 18.04
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     	libglvnd0 libglvnd0:i386 \
-# 	libgl1 libgl1:i386 \
-# 	libglx0 libglx0:i386 \
-# 	libegl1 libegl1:i386 \
-# 	libgles2 libgles2:i386 && \
-#     rm -rf /var/lib/apt/lists/*
-
-
-# RUN echo "\
-# {
-#     "file_format_version" : "1.0.0",
-#     "ICD" : {
-#         "library_path" : "libEGL_nvidia.so.0"
-#     }
-# }
-# " > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
-
-# COPY 10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
-
-
 ############################################3
 # Configure desktop
 ENV DISPLAY :1
@@ -116,20 +84,18 @@ ENV PATH ${PATH}:/opt/VirtualGL/bin:/opt/TurboVNC/bin
 
 # Install NoVNC
 RUN curl -fsSL https://github.com/novnc/noVNC/archive/v${NOVNC_VERSION}.tar.gz | tar -xzf - -C /opt && \
-        curl -fsSL https://github.com/novnc/websockify/archive/v${WEBSOCKIFY_VERSION}.tar.gz | tar -xzf - -C /opt && \
-        mv /opt/noVNC-${NOVNC_VERSION} /opt/noVNC && \
-        mv /opt/websockify-${WEBSOCKIFY_VERSION} /opt/websockify && \
-        cd /opt/websockify && make
+    curl -fsSL https://github.com/novnc/websockify/archive/v${WEBSOCKIFY_VERSION}.tar.gz | tar -xzf - -C /opt && \
+    mv /opt/noVNC-${NOVNC_VERSION} /opt/noVNC && \
+    mv /opt/websockify-${WEBSOCKIFY_VERSION} /opt/websockify && \
+    cd /opt/websockify && make
 # Insecure by default. TODO: randomize?
-RUN mkdir -p /home/openacc/.vnc && echo "$VNCPASSWORD" | vncpasswd -f > /home/openacc/.vnc/passwd && chmod 0600 /home/openacc/.vnc/passwd
+RUN mkdir -p /home/openacc/.vnc && echo "$VNCPASSWORD" | vncpasswd -f > /home/openacc/.vnc/passwd && chmod 0600 /home/openacc/.vnc/passwd 
 
 # Overlay file system with overrides
 COPY fs /
 
 # Default panel (otherwise prompted to initialize panel)
 RUN cp /etc/xdg/xfce4/panel/default.xml /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
-
-EXPOSE 5901
 
 #################################################33
 
@@ -140,7 +106,7 @@ WORKDIR /home/openacc/labs
 ADD scripts/entry_point.sh /home/openacc/entrypoint.sh
 
 RUN chmod +x /home/openacc/entrypoint.sh
-RUN touch /run/nginx.pid && chown -R openacc /home/openacc/ /var/lib/nginx /var/log/nginx /run/nginx.pid && (echo 'xfce4-session' > /home/openacc/.vnc/xstartup.turbovnc) && chmod 755 /home/openacc/.vnc/xstartup.turbovnc
+RUN touch /run/nginx.pid && chown -R openacc /home/openacc/ /var/lib/nginx /var/log/nginx /run/nginx.pid && (echo 'xfce4-session' > /home/openacc/.vnc/xstartup.turbovnc) && chmod 0755 /home/openacc/.vnc/xstartup.turbovnc
 
 USER openacc
 
