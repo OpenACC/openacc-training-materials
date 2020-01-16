@@ -38,7 +38,7 @@ double calcNext(double *restrict A, double *restrict Anew, int m, int n)
     #pragma acc kernels loop gang worker(4) independent present(A,Anew)
     for( int j = 1; j < n-1; j++)
     {
-        #pragma acc loop vector(32) indepedent
+        #pragma acc loop vector(32) independent
         for( int i = 1; i < m-1; i++ )
         {
             Anew[OFFSET(j, i, m)] = 0.25 * ( A[OFFSET(j, i+1, m)] + A[OFFSET(j, i-1, m)]
@@ -51,10 +51,10 @@ double calcNext(double *restrict A, double *restrict Anew, int m, int n)
         
 void swap(double *restrict A, double *restrict Anew, int m, int n)
 {
-    #pragma acc kernels loop gang indepedent present(A,Anew)
+    #pragma acc kernels loop gang independent present(A,Anew)
     for( int j = 1; j < n-1; j++)
     {
-        #pragma acc kernels loop vector independent
+        #pragma acc loop vector independent
         for( int i = 1; i < m-1; i++ )
         {
             A[OFFSET(j, i, m)] = Anew[OFFSET(j, i, m)];    
