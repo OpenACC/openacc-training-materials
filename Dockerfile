@@ -1,8 +1,9 @@
-
 # To run this dockerfile you need to present port 8000 and provide a hostname.
 # For instance:
 #   $ docker run --runtime nvidia --rm -it -p "8000:8000" -e HOSTNAME=foo.example.com openacc-labs:latest
 FROM nvcr.io/hpc/pgi-compilers:ce
+
+# PGI Tutorials
 
 ARG TURBOVNC_VERSION=2.2.1
 ARG VIRTUALGL_VERSION=2.6.1
@@ -10,6 +11,7 @@ ARG LIBJPEG_VERSION=1.5.2
 ARG WEBSOCKIFY_VERSION=0.8.0
 ARG NOVNC_VERSION=1.0.0-beta
 ARG VNCPASSWORD=openacc
+
 
 RUN dpkg --add-architecture i386 && \
     apt update && \
@@ -19,7 +21,7 @@ RUN dpkg --add-architecture i386 && \
     nginx \
     zip \
     xfce4 \
-    dbus-x11 \	
+    dbus-x11 \
     ca-certificates \
     curl \
     libc6-dev \
@@ -73,7 +75,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPA
 
 # Install TurboVNC
 RUN cd /tmp && \
-        curl -fsSL -O https://svwh.dl.sourceforge.net/project/turbovnc/${TURBOVNC_VERSION}/turbovnc_${TURBOVNC_VERSION}_amd64.deb \
+        curl -fsSL -O -k https://svwh.dl.sourceforge.net/project/turbovnc/${TURBOVNC_VERSION}/turbovnc_${TURBOVNC_VERSION}_amd64.deb \
         -O https://svwh.dl.sourceforge.net/project/libjpeg-turbo/${LIBJPEG_VERSION}/libjpeg-turbo-official_${LIBJPEG_VERSION}_amd64.deb \
         -O https://svwh.dl.sourceforge.net/project/virtualgl/${VIRTUALGL_VERSION}/virtualgl_${VIRTUALGL_VERSION}_amd64.deb \
         -O https://svwh.dl.sourceforge.net/project/virtualgl/${VIRTUALGL_VERSION}/virtualgl32_${VIRTUALGL_VERSION}_amd64.deb && \
@@ -84,12 +86,12 @@ ENV PATH ${PATH}:/opt/VirtualGL/bin:/opt/TurboVNC/bin
 
 # Install NoVNC
 RUN curl -fsSL https://github.com/novnc/noVNC/archive/v${NOVNC_VERSION}.tar.gz | tar -xzf - -C /opt && \
-    curl -fsSL https://github.com/novnc/websockify/archive/v${WEBSOCKIFY_VERSION}.tar.gz | tar -xzf - -C /opt && \
-    mv /opt/noVNC-${NOVNC_VERSION} /opt/noVNC && \
-    mv /opt/websockify-${WEBSOCKIFY_VERSION} /opt/websockify && \
-    cd /opt/websockify && make
+        curl -fsSL https://github.com/novnc/websockify/archive/v${WEBSOCKIFY_VERSION}.tar.gz | tar -xzf - -C /opt && \
+        mv /opt/noVNC-${NOVNC_VERSION} /opt/noVNC && \
+        mv /opt/websockify-${WEBSOCKIFY_VERSION} /opt/websockify && \
+        cd /opt/websockify && make
 # Insecure by default. TODO: randomize?
-RUN mkdir -p /home/openacc/.vnc && echo "$VNCPASSWORD" | vncpasswd -f > /home/openacc/.vnc/passwd && chmod 0600 /home/openacc/.vnc/passwd 
+RUN mkdir -p /home/openacc/.vnc && echo "$VNCPASSWORD" | vncpasswd -f > /home/openacc/.vnc/passwd && chmod 0600 /home/openacc/.vnc/passwd
 
 # Overlay file system with overrides
 COPY fs /
