@@ -8,12 +8,12 @@ Before running the OpenAcc training materials which includes PGI Community Editi
 
 * Pascal (sm60), Volta (sm70) or Turing (sm75) NVIDIA GPU(s)
 * CUDA driver version
-    * &gt;= 396.26 &nbsp;&nbsp; for CUDA 9.2
+    * &gt;= 396.26 for CUDA 9.2
     * &gt;= 410.104 for CUDA 10.0
-    * &gt;= 418.39 &nbsp;&nbsp; for CUDA 10.1
+    * &gt;= 418.39 for CUDA 10.1
 * [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) >= 2.0.3
 
-By default PGI compilers will automatically choose among CUDA Toolkit verions 9.2, 10.0 or 10.1 based on your installed driver. To specify a specific version of CUDA, set the CUDA_HOME environment variable to the path of the CUDA installation, e.g., CUDA_HOME=/usr/local/cuda-9.0.  See the [PGI 19.4 User's Guide](https://www.pgroup.com/resources/docs/19.4/x86/pgi-user-guide/index.htm?utm_campaign=ce&utm_source=ngc_pgi&utm_medium=website) for more infoation on using different [CUDA Toolkit Versions](https://www.pgroup.com/resources/docs/19.4/x86/pgi-user-guide/index.htm#cuda-toolkit-versions).
+By default PGI compilers will automatically choose among CUDA Toolkit verions 9.2, 10.0 or 10.1 based on your installed driver. To specify a specific version of CUDA, set the CUDA_HOME environment variable to the path of the CUDA installation, e.g., CUDA_HOME=/usr/local/cuda-9.0.  See the [PGI 19.4 User's Guide](https://www.pgroup.com/resources/docs/19.4/x86/pgi-user-guide/index.htm?utm_campaign=ce&utm_source=ngc_pgi&utm_medium=website) for more information on using different [CUDA Toolkit Versions](https://www.pgroup.com/resources/docs/19.4/x86/pgi-user-guide/index.htm#cuda-toolkit-versions).
 
 ## Modules
 
@@ -186,7 +186,8 @@ hosting environment.
 #### Useful flags:
 
 `--gpus` : Enable NVIDIA GPUs container runtime support
-`--cap-add`: Runtime privilege and add Linux capabilities. Use `SYS_ADMIN` if encoutering target device permission error when using PG profiler in VNC. 
+`--cap-add=SYS_ADMIN`: Runtime privilege and add Linux capabilities for encountering target device permission error when using PG profiler in VNC. 
+`--privileged`: container is given access to all devices
 `--device`: container is given limited access to a specific device   
 
 Modules 4 - 6 require an NVIDIA GPU to be run without customization.
