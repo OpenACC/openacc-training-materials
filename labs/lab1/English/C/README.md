@@ -75,8 +75,8 @@ One should generally start the process at the top with the **analyze** step. For
 
 In the section below you will learn about the algorithm implemented in the example code and see examples pulled out of the source code. If you want a sneak peek at the source code, you can take a look at the files linked below.
 
-[jacobi.c](/edit/lab1/English/C/jacobi.c)  
-[laplace2d.c](/edit/lab1/English/C/laplace2d.c)  
+[jacobi.c](/lab1/English/C/jacobi.c)  
+[laplace2d.c](/lab1/English/C/laplace2d.c)  
 
 ### Code Description
 
@@ -86,7 +86,7 @@ This is a visual representation of the plate before the simulation starts:
   
 ![plate1.png](../images/plate1.png)  
   
-We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.c](/edit/labs/lab1/English/C/laplace2d.c) file, we see a function called **`initialize`**. This function is what "heats" the top edge of the plate. 
+We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.c](./laplace2d.c) file, we see a function called **`initialize`**. This function is what "heats" the top edge of the plate. 
   
 ```cpp
 void initialize(double *restrict A, double *restrict Anew, int m, int n)  
@@ -268,7 +268,7 @@ There's one very important clause that you'll need to know for our example code:
 
 ### Parallelize the Example Code
 
-At this point you have all of the tools you need to begin accelerating your application. The loops you will be parallelizing are in [laplace2d.c](/edit/labs/lab1/English/C/laplace2d.c). You can edit the file directly from your browser window, but be sure to save your changes before moving on to the next step. It is advisible to start with the `calcNext` routine and test your changes by compiling and running the code before moving on to the `swap` routine. OpenACC can be incrementally added to your application so that you can ensure each change is correct before getting too far along, which greatly simplifies debugging.
+At this point you have all of the tools you need to begin accelerating your application. The loops you will be parallelizing are in [laplace2d.c](./laplace2d.c). You can edit the file directly from your browser window, but be sure to save your changes before moving on to the next step. It is advisible to start with the `calcNext` routine and test your changes by compiling and running the code before moving on to the `swap` routine. OpenACC can be incrementally added to your application so that you can ensure each change is correct before getting too far along, which greatly simplifies debugging.
 
 Once you have made your changes, you can compile and run the application by running the cell below. Please note that our compiler options have changed a little bit, we've added the following two important flags:
 
@@ -282,7 +282,7 @@ Go ahead and build and run the code, noting both the error value at the 900th it
 ! pgcc -fast -ta=multicore -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
 ```
 
-Here's the ouput you should see after running the above cell. Your total runtime may be slightly different, but it should be close. If you find yourself stuck on this part, you can take a look at [our solution](/edit/lab1/English/C/solutions/laplace2d.parallel.c). If you see a warning like `48, Accelerator restriction: size of the GPU copy of Anew,A is unknown`, you can safely ignore it.
+Here's the ouput you should see after running the above cell. Your total runtime may be slightly different, but it should be close. If you find yourself stuck on this part, you can take a look at [our solution](.//solutions/laplace2d.parallel.c). If you see a warning like `48, Accelerator restriction: size of the GPU copy of Anew,A is unknown`, you can safely ignore it.
 
 ```
 jacobi.c:
