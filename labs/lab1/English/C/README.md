@@ -75,8 +75,8 @@ One should generally start the process at the top with the **analyze** step. For
 
 In the section below you will learn about the algorithm implemented in the example code and see examples pulled out of the source code. If you want a sneak peek at the source code, you can take a look at the files linked below.
 
-[jacobi.c](/lab1/English/C/jacobi.c)  
-[laplace2d.c](/lab1/English/C/laplace2d.c)  
+[jacobi.c](./jacobi.c)  
+[laplace2d.c](./laplace2d.c)  
 
 ### Code Description
 
@@ -377,9 +377,7 @@ It just so happens that the `acc parallel loop` directive isn't the only way we 
 
 ## Post-Lab Summary
 
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
+If you would like to download this lab for later viewing, you can execute the following cell block to create a zip-file of the files you've been working on.
 
 
 ```bash
@@ -388,5 +386,3 @@ rm -f openacc_files.zip
 rm -f *.o
 zip -r openacc_files.zip *
 ```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)
