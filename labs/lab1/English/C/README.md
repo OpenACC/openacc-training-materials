@@ -59,7 +59,7 @@ This gives us lots of details about the GPU, for instance the device number, the
 
 Our goal for this lab is to learn the first steps in accelerating an application with OpenACC. We advocate the following 3-step development cycle for OpenACC.
   
-<img src="../files/images/development-cycle.png" alt="OpenACC development cycle" width="50%">
+<img src="../images/development-cycle.png" alt="OpenACC development cycle" width="50%">
 
 **Analyze** your code to determine most likely places needing parallelization or optimization.
 
@@ -84,7 +84,7 @@ The code simulates heat distribution across a 2-dimensional metal plate. In the 
 
 This is a visual representation of the plate before the simulation starts:  
   
-![plate1.png](../files/images/plate1.png)  
+![plate1.png](../images/plate1.png)  
   
 We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.c](laplace2d.c) file, we see a function called **`initialize`**. This function is what "heats" the top edge of the plate. 
   
@@ -105,7 +105,7 @@ After the top edge is heated, the code will simulate the heat distributing acros
 
 This is the plate after several iterations of our simulation:  
   
-![plate2.png](../files/images/plate2.png) 
+![plate2.png](../images/plate2.png) 
 
 That's the theory: simple heat distribution. However, we are more interested in how the code works. 
 
@@ -113,11 +113,11 @@ That's the theory: simple heat distribution. However, we are more interested in 
 
 The 2-dimensional plate is represented by a 2-dimensional array containing double-precision floating point values. These doubles represent temperature; 0.0 is room temperature, and 1.0 is our max temperature. The 2-dimensional plate has two states, one represents the current temperature, and one represents the expected temperature values at the next step in our simulation. These two states are represented by arrays **`A`** and **`Anew`** respectively. The following is a visual representation of these arrays, with the top edge "heated".
 
-![plate_sim2.png](../files/images/plate_sim2.png)  
+![plate_sim2.png](../images/plate_sim2.png)  
     
 Simulating this state in two arrays is very important for our **`calcNext`** function. Our calcNext is essentially our "simulate" function. calcNext will look at the inner elements of A (meaning everything except for the edges of the plate) and update each elements temperature based on the temperature of its neighbors.  If we attempted to calculate in-place (using only **`A`**), then each element would calculate its new temperature based on the updated temperature of previous elements. This data dependency not only prevents parallelizing the code, but would also result in incorrect results when run in serial. By calculating into the temporary array **`Anew`** we ensure that an entire step of our simulation has completed before updating the **`A`** array.
 
-![plate_sim3.png](../files/images/plate_sim3.png)  
+![plate_sim3.png](../images/plate_sim3.png)  
 
 Below is the **`calcNext`** function:
 ```cpp
@@ -250,15 +250,15 @@ We may also define a "parallel region". The parallel region may have multiple lo
 
 `#pragma acc parallel loop` will mark the next loop for parallelization. It is extremely important to include the `loop`, otherwise you will not be parallelizing the loop properly. The parallel directive tells the compiler to "redundantly parallelize" the code. The `loop` directive specifically tells the compiler that we want the loop parallelized. Let's look at an example of why the loop directive is so important. The `parallel` directive tells the compiler to create somewhere to run parallel code. OpenACC calls that somewhere a `gang`, which might be a thread on the CPU or maying a CUDA threadblock or OpenCL workgroup. It will choose how many gangs to create based on where you're running, only a few on a CPU (like 1 per CPU core) or lots on a GPU (1000's possibly). Gangs allow OpenACC code to scale from small CPUs to large GPUs because each one works completely independently of each other gang. That's why there's a space between gangs in the images below.
 
-![parallel1](../files/images/parallel1.png)
+![parallel1](../images/parallel1.png)
 
 ---
 
-![parallel2](../files/images/parallel2.png)
+![parallel2](../images/parallel2.png)
 
 There's a good chance that I don't want my loop to be run redundantly in every gang though, that seems wasteful and potentially dangerous. Instead I want to instruct the compiler to break up the iterations of my loop and to run them in parallel on the gangs. To do that, I simply add a `loop` directive to the interesting loops. This instructs the compiler that I want my loop to be parallelized and promises to the compiler that it's safe to do so. Now that I have both `parallel` and `loop`, things loop a lot better (and run a lot faster). Now the compiler is spreading my loop iterations to all of my gangs, but also running multiple iterations of the loop at the same time within each gang as a *vector*. Think of a vector like this, I have 10 numbers that I want to add to 10 other numbers (in pairs). Rather than looking up each pair of numbers, adding them together, storing the result, and then moving on to the next pair in-order, modern computer hardware allows me to add all 10 pairs together all at once, which is a lot more efficient. 
 
-![parallel3](../files/images/parallel3.png)
+![parallel3](../images/parallel3.png)
 
 The `acc parallel loop` directive is both a promise and a request to the compiler. I as the programmer am promising that the loop can safely be parallelized and am requesting that the compiler do so in a way that makes sense for the machine I am targeting. The compiler may make completely different decisions if I'm compiling for a multicore CPU than it would for a GPU and that's the idea. OpenACC enables programmers to parallelize their codes without having to worry about the details of how best to do so for every possible machine. 
 
@@ -377,9 +377,7 @@ It just so happens that the `acc parallel loop` directive isn't the only way we 
 
 ## Post-Lab Summary
 
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
+If you would like to download this lab for later viewing, you can execute the following cell block to create a zip-file of the files you've been working on.
 
 
 ```bash
