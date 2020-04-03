@@ -6,11 +6,11 @@ In this lab you will learn the basics of using OpenACC to parallelize a simple a
 Let's execute the cell below to display information about the GPUs running on the server by running the `pgaccelinfo` command, which ships with the PGI compiler that we will be using. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
 
 
-```python
-!pgaccelinfo
+```bash
+$ pgaccelinfo
 ```
 
-The output of the above command will vary according to which GPUs you have in your system. For example, if you are running the lab on a machine with an NVIDIA TITAN Xp GPU, you might would see the following:
+The output of the above command will vary according to which GPUs you have in your system. For example, if you are running the lab on a machine with NVIDIA Tesla K80 GPUs, you might would see the following:
 
 ```
 CUDA Driver Version:           10020
@@ -52,14 +52,14 @@ Multi-Device:                  Yes
 PGI Compiler Option:           -ta=tesla:cc60
 ```
 
-This gives us lots of details about the GPU, for instance the device number, the type of device, and at the very bottom the command line argument we should use when targeting this GPU (see *_PGI Compiler Option_*). We will use this command line option a bit later to build for our GPU.
+This gives us lots of details about the GPU, for instance the device number, the type of device, and at the very bottom the command line argument we should use when targeting this GPU (see *_PGI Default Target_*). We will use this command line option a bit later to build for our GPU.
 
 ---
 ## Introduction
 
 Our goal for this lab is to learn the first steps in accelerating an application with OpenACC. We advocate the following 3-step development cycle for OpenACC.
   
-<img src="../images/development-cycle.png" alt="OpenACC development cycle" width="50%">
+<img src="../files/images/development-cycle.png" alt="OpenACC development cycle" width="50%">
 
 **Analyze** your code to determine most likely places needing parallelization or optimization.
 
@@ -67,7 +67,7 @@ Our goal for this lab is to learn the first steps in accelerating an application
 
 **Optimize** your code to improve observed speed-up from parallelization.
 
-One should generally start the process at the top with the **analyze** step. For complex applications, it's useful to have a profiling tool available to learn where your application is spending its execution time and to focus your efforts there. The CUDA toolkit ships with a profiling tools called Nsight Systems and Nsight Compute. Since our example code is quite a bit simpler than a full application, we'll skip profiling the code and simply analyze the code by reading it.
+One should generally start the process at the top with the **analyze** step. For complex applications, it's useful to have a profiling tool available to learn where your application is spending its execution time and to focus your efforts there. The PGI compiler ships with a profiler called PGProf. Since our example code is quite a bit simpler than a full application, we'll skip profiling the code and simply analyze the code by reading it. 
 
 ---
 
@@ -88,7 +88,7 @@ This is a visual representation of the plate before the simulation starts:
   
 We can see that the plate is uniformly room temperature, except for the top edge. Within the [laplace2d.f90](laplace2d.f90) file, we see a function called **`initialize`**. This function is what "heats" the top edge of the plate. 
   
-```f90
+```fortran
     subroutine initialize(A, Anew, m, n)
       integer, parameter :: fp_kind=kind(1.0d0)
       real(fp_kind),allocatable,intent(out)   :: A(:,:)
@@ -123,8 +123,9 @@ Simulating this state in two arrays is very important for our **`calcNext`** fun
 
 ![plate_sim3.png](../images/plate_sim3.png)  
 
-Below is the **`calcNext`** function:
-```f90
+This is the **`calcNext`** function:
+
+```fortran
 01 function calcNext(A, Anew, m, n)
 02   integer, parameter          :: fp_kind=kind(1.0d0)
 03   real(fp_kind),intent(inout) :: A(0:n-1,0:m-1)
@@ -146,10 +147,11 @@ Below is the **`calcNext`** function:
 19 end function calcNext
 ```
 
-We see on lines 08 and 09 where we are calculating the value of **`Anew`** at **`i,j`** by averaging the current values of its neighbors. Line 10 is where we calculate the current rate of change for the simulation by looking at how much the **`i,j`** element changed during this step and finding the maximum value for this **`error`**. This allows us to short-circuit our simulation if it reaches a steady state before we've completed our maximum number of iterations.
+We see on lines 13 and 14 where we are calculating the value of **`Anew`** at **`i,j`** by averaging the current values of its neighbors. Line 15 is where we calculate the current rate of change for the simulation by looking at how much the **`i,j`** element changed during this step and finding the maximum value for this **`error`**. This allows us to short-circuit our simulation if it reaches a steady state before we've completed our maximum number of iterations.
 
-Lastly, our **`swap`** function will copy the contents of **`Anew`** to **`A`**.
-```f90
+Lastly, our **`swap`** subroutine will copy the contents of **`Anew`** to **`A`**.
+
+```fortran
 01 subroutine swap(A, Anew, m, n)
 02   integer, parameter        :: fp_kind=kind(1.0d0)
 03   real(fp_kind),intent(out) :: A(0:n-1,0:m-1)
@@ -167,7 +169,7 @@ Lastly, our **`swap`** function will copy the contents of **`Anew`** to **`A`**.
 
 ---
 
-## Run the Code
+## Run the Code 
 
 Now that we've seen what the code does, let's build and run it. We need to record the results of our program before making any changes so that we can compare them to the results from the parallel code later on. It is also important to record the time that the program takes to run, as this will be our primary indicator to whether or not our parallelization is improving performance.
 
@@ -181,32 +183,31 @@ For this lab we are using the PGI compiler to compiler our code. You will not ne
 **-fast**     : this compiler flag instructs the compiler to use what it believes are the best possible optimizations for our system
 
 
-```python
-! pgfortran -fast -o laplace jacobi.f90 laplace2d.f90 && echo "Compilation Successful!" && ./laplace
+```bash
+$ pgfortran -fast -o laplace laplace2d.f90 jacobi.f90 && echo "Compilation Successful!" && ./laplace
 ```
 
 ### Expected Output
 ```
-jacobi.f90:
 laplace2d.f90:
+jacobi.f90:
 Compilation Successful!
 Jacobi relaxation Calculation: 4096 x 4096 mesh
-    0, 0.250000
-  100, 0.002397
-  200, 0.001204
-  300, 0.000804
-  400, 0.000603
-  500, 0.000483
-  600, 0.000403
-  700, 0.000345
-  800, 0.000302
-  900, 0.000269
- total: 60.725809 s
+    0  0.250000
+  100  0.002397
+  200  0.001204
+  300  0.000804
+  400  0.000603
+  500  0.000483
+  600  0.000403
+  700  0.000345
+  800  0.000302
+  900  0.000269
+ completed in     58.397 seconds
 ```
-
 ### Understanding Code Results
 
-We see from the output that onces every hundred steps the program outputs the value of `error`, which is the maximum rate of change among the cells in our array. If these outputs change during any point while we parallelize our code, we know we've made a mistake. For simplicity, focus on the last output, which occurred at iteration 900 (the error is 0.000269). It is also helpful to record the time the program took to run (it should have been around a minute). Our goal while parallelizing the code is ultimately to make it faster, so we need to know our "base runtime" in order to know if the code is running faster. Keep in mind that if you run the code multiple times you may get slightly different total runtimes, but you should get the same values for the error rates.
+We see from the output that onces every hundred steps the program outputs the value of `error`, which is the maximum rate of change among the cells in our array. If these outputs change during any point while we parallelize our code, we know we've made a mistake. For simplicity, focus on the last output, which occurred at iteration 900 (the error value is 0.000269). It is also helpful to record the time the program took to run (it should have been about a minute). Our goal while parallelizing the code is ultimately to make it faster, so we need to know our "base runtime" in order to know if the code is running faster. Keep in mind that if you run the code multiple times you may get slightly different total runtimes, but you should get the same values for the error rates.
 
 ## Parallelizing Loops with OpenACC
 
@@ -222,9 +223,7 @@ Using OpenACC directives will allow us to parallelize our code without needing t
 
 **`!$acc <directive> <clauses>`**
 
-**!** in Fortran signifies a commented line. We will use specially formatted comments in order to guide the compiler. If the compiler does not understand the commented line, it can ignore it, rather than throw a syntax error.
-
-**$acc** is an addition to our comment. It specifies that this is an **OpenACC directive**. Any non-OpenACC compiler will just treat the entire line as a comment and ignore it. Even our PGI compiler can be told to ignore them. (which lets us run our parallel code sequentially!)
+`!$acc` in Fortran is what's known as a "compiler hint" or "compiler directive." These are very similar to programmer comments, since the line begins with a comment statement `!`. After the comment is `$acc`. OpenACC compliant compilers with appropriate command line options can interpret this as an OpenACC directive that "guide" the compiler above and beyond what the programming language allows. If the compiler does not understand `!$acc` it can ignore it, rather than throw a syntax error because it's just a comment.
 
 **directives** are commands in OpenACC that will tell the compiler to do some action. For now, we will only use directives that allow the compiler to parallelize our code.
 
@@ -232,45 +231,45 @@ Using OpenACC directives will allow us to parallelize our code without needing t
 
 
 ---
-### Parallel  and Loop Directives
+### Parallel and Loop Directives
 
 There are three directives we will cover in this lab: `parallel`, `loop`, and `parallel loop`. Once we understand all three of them, you will be tasked with parallelizing our laplace code with your preferred directive (or use all of them, if you'd like!)
 
 The parallel directive may be the most straight-forward of the directives. It will mark a region of the code for parallelization (this usually only includes parallelizing a single **for** loop.) Let's take a look:
 
-```f90
-!$acc parallel loop
-do i=1,n-2
-    < loop code >
-end do
+```fortran
+    !$acc parallel loop
+    do i=1,N
+        < loop code >
+    enddo
 ```
 
-We may also define a "parallel region". The parallel region may have multiple loops (though this is often not recommended!) The parallel region is everything contained within the outer-most curly braces.
+We may also define a *parallel region*. The parallel region may have multiple loops (though this is often not recommended!) The parallel region is everything contained within the outer-most curly braces.
 
-```f90
+```fortran
 !$acc parallel
-!$acc loop
-do i=1,n-2
-    < loop code >
-end do
+    !$acc loop
+    do i=1,N
+        < loop code >
+    enddo
 !$acc end parallel
 ```
 
 `!$acc parallel loop` will mark the next loop for parallelization. It is extremely important to include the `loop`, otherwise you will not be parallelizing the loop properly. The parallel directive tells the compiler to "redundantly parallelize" the code. The `loop` directive specifically tells the compiler that we want the loop parallelized. Let's look at an example of why the loop directive is so important. The `parallel` directive tells the compiler to create somewhere to run parallel code. OpenACC calls that somewhere a `gang`, which might be a thread on the CPU or maying a CUDA threadblock or OpenCL workgroup. It will choose how many gangs to create based on where you're running, only a few on a CPU (like 1 per CPU core) or lots on a GPU (1000's possibly). Gangs allow OpenACC code to scale from small CPUs to large GPUs because each one works completely independently of each other gang. That's why there's a space between gangs in the images below.
 
-![parallel1](../images/parallel1.png)
+![parallel1](../images/parallel1f.png)
 
 ---
 
-![parallel2](../images/parallel2.png)
+![parallel2](../images/parallel2f.png)
 
-There's a good chance that I don't want my loop to be run redundantly in every gang though, that seems wasteful and potentially dangerous. Instead I want to instruct the compiler to break up the iterations of my loop and to run them in parallel on the gangs. To do that, I simply add a `loop` directive to the interesting loops. This instructs the compiler that I want my loop to be parallelized and promises to the compiler that it's safe to do so. Now that I have both `parallel` and `loop`, things loop a lot better (and run a lot faster). Now the compiler is spreading my loop iterations to all of my gangs, but also running multiple iterations of the loop at the same time within each gang as a *vector*. Think of a vector like this, I have 10 numbers that I want to add to 10 other numbers (in pairs). Rather than looking up each pair of numbers, adding them together, storing the result, and then moving on to the next pair in-order, modern computer hardware allows me to add all 10 pairs together all at once, which is a lot more efficient. 
+There's a good chance that I don't want my loop to be run redundantly in every gang though, that seems wasteful and potentially dangerous. Instead I want to instruct the compiler to break up the iterations of my loop and to run them in parallel on the gangs. To do that, I simply add a `loop` directive to the interesting loops. This instructs the compiler that I want my loop to be parallelized and promises to the compiler that it's safe to do so. Now that I have both `parallel` and `loop`, things loop a lot better (and run a lot faster). Now the compiler is spreading my loop iterations to all of my gangs, but also running multiple iterations of the loop at the same time within each gang as a *vector*. Think of a vector like this, I have 10 numbers that I want to add to 10 other numbers (in pairs). Rather than looking up each pair of numbers, adding them together, storing the result, and then moving on to the next pair in-order, modern computer hardware allows me to add all 10 pairs together all at once, which is a lot more efficient.
 
-![parallel3](../images/parallel3.png)
+![parallel3](../images/parallel3f.png)
 
-The `!$acc parallel loop` directive is both a promise and a request to the compiler. I, as the programmer, am promising that the loop can safely be parallelized and am requesting that the compiler do so in a way that makes sense for the machine I am targeting. The compiler may make completely different decisions if I'm compiling for a multicore CPU than it would for a GPU and that's the idea. OpenACC enables programmers to parallelize their codes without having to worry about the details of how best to do so for every possible machine. 
+The `acc parallel loop` directive is both a promise and a request to the compiler. I as the programmer am promising that the loop can safely be parallelized and am requesting that the compiler do so in a way that makes sense for the machine I am targeting. The compiler may make completely different decisions if I'm compiling for a multicore CPU than it would for a GPU and that's the idea. OpenACC enables programmers to parallelize their codes without having to worry about the details of how best to do so for every possible machine. 
 
-### Reduction Clause
+### The Reduction Clause
 
 There's one very important clause that you'll need to know for our example code: the `reduction` clause. Take note of how the loops in `calcNext` each calculate an error value and then compare against the maximum value to find an absolute maximum. When executing this operation in parallel, it's necessary to do a *reduction* in order to ensure you always get the correct answer. A reduction takes all of the values of `error` calculated in the loops and *reduces* them down to a single answer, in this case the maximum. There are a variety of reductions that can be done, but for our example code we only care about the max operation. We will inform the compiler about our reduction by adding a `reduction(max:error)` clause to the `acc parallel loop` in the `calcNext` function.
 
@@ -286,42 +285,40 @@ Once you have made your changes, you can compile and run the application by runn
 Go ahead and build and run the code, noting both the error value at the 900th iteration and the total runtime. If the error value changed, you may have made a mistake. Don't forget the `reduction(max:error)` clause on the loop in the `calcNext` function!
 
 
-```python
-! pgfortran -fast -ta=multicore -Minfo=accel -o laplace jacobi.f90 laplace2d.f90 && echo "Compilation Successful!" && ./laplace
+```bash
+$ pgfortran -fast -ta=multicore -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && echo "Compilation Successful!" && ./laplace
 ```
 
-Here's the ouput you should see after running the above cell. Your total runtime may be slightly different, but it should be close. If you find yourself stuck on this part, you can take a look at [our solution](solutions/laplace2d.parallel.f90). If you see a warning like `48, Accelerator restriction: size of the GPU copy of Anew,A is unknown`, you can safely ignore it.
+Here's the ouput you should see after running the above cell. Your total runtime may be slightly different, but it should be close. If you find yourself stuck on this part, you can take a look at [our solution](solutions/laplace2d.parallel.f90). 
 
 ```
-jacobi.f90:
 laplace2d.f90:
-calcNext:
-     47, Generating Multicore code
-         48, #pragma acc loop gang
-     48, Accelerator restriction: size of the GPU copy of Anew,A is unknown
-         Generating reduction(max:error)
-     50, Loop is parallelizable
+calcnext:
+     58, Generating Multicore code
+         59, !$acc loop gang
+     58, Generating reduction(max:error)
+     60, Loop is parallelizable
 swap:
-     62, Generating Multicore code
-         63, #pragma acc loop gang
-     63, Accelerator restriction: size of the GPU copy of Anew,A is unknown
-     65, Loop is parallelizable
+     76, Generating Multicore code
+         77, !$acc loop gang
+     78, Loop is parallelizable
+jacobi.f90:
 Compilation Successful!
 Jacobi relaxation Calculation: 4096 x 4096 mesh
-    0, 0.250000
-  100, 0.002397
-  200, 0.001204
-  300, 0.000804
-  400, 0.000603
-  500, 0.000483
-  600, 0.000403
-  700, 0.000345
-  800, 0.000302
-  900, 0.000269
- total: 30.998768 s
+    0  0.250000
+  100  0.002397
+  200  0.001204
+  300  0.000804
+  400  0.000603
+  500  0.000483
+  600  0.000403
+  700  0.000345
+  800  0.000302
+  900  0.000269
+ completed in     30.291 seconds
 ```
 
-Great! Now our code is running roughly twice as fast by using all of the cores on our CPU, but I really want to run the code on a GPU. Once you have accelerated both loop nests in the example application and are sure you're getting correct results, you only need to change one compiler option to build the code for the GPUs on our node.
+Great! Now our code is running nearly twice as fast by using all of the cores on our CPU, but I really want to run the code on a GPU. Once you have accelerated both loop nests in the example application and are sure you're getting correct results, you only need to change one compiler option to build the code for the GPUs on our node.
 
 Here's the new compiler option we'll be using:
 * `-ta=tesla:managed` - Build the code for the NVIDIA Tesla GPU on our system, using managed memory 
@@ -329,8 +326,8 @@ Here's the new compiler option we'll be using:
 Notice above that I'm using something called *managed memory* for this task. Since our CPU and GPU each have their own physical memory I need to move the data between these memories. To simplify things this week, I'm telling the compiler to manage all of that data movement for me. Next week you'll learn how and why to manage the data movement yourself.
 
 
-```python
-! pgfortran -fast -ta=tesla:managed -Minfo=accel -o laplace jacobi.f90 laplace2d.f90 && echo "Compilation Successful!" && ./laplace
+```bash
+$ pgfortran -fast -ta=tesla:managed -Minfo=accel -o laplace  laplace2d.f90 jacobi.f90 && echo "Compilation Successful!" && ./laplace
 ```
 
 Wow! That ran a lot faster! This demonstrates the power of using OpenACC to accelerate an application. I made very minimal code changes and could run my code on multicore CPUs and GPUs by only changing my compiler option. Very cool!
@@ -339,39 +336,35 @@ Just for your reference, here's the timings I saw at each step of the process. P
 
 | Version   | Time (s) |
 |-----------|----------|
-| Original  | 60s      |
-| Multicore | 31s      |
-| GPU       | 1.5s      |
+| Original  | 58       |
+| Multicore | 30       |
+| GPU       | 1.5      |
 
-So how did the compiler perform this miracle of speeding up my code on both the CPU and GPU? Let's look at the compiler output from those two versions:
+So how did the compiler perform this miracle of speeding up my code on both the CPU and GPU? Let's compiler the compiler output from those two versions:
 
 #### CPU
 ```
-calcNext:
-     47, Generating Multicore code
-         48, #pragma acc loop gang
-     48, Accelerator restriction: size of the GPU copy of Anew,A is unknown
-         Generating reduction(max:error)
-     50, Loop is parallelizable
+calcnext:
+     58, Generating Multicore code
+         59, !$acc loop gang
+     58, Generating reduction(max:error)
+     60, Loop is parallelizable
 ```
-
 #### GPU
-
 ```
-calcNext:
-     47, Accelerator kernel generated
+calcnext:
+     58, Accelerator kernel generated
          Generating Tesla code
-         48, #pragma acc loop gang /* blockIdx.x */
-             Generating reduction(max:error)
-         50, #pragma acc loop vector(128) /* threadIdx.x */
-     47, Generating implicit copyin(A[:])
-         Generating implicit copy(error)
-         Generating implicit copyout(Anew[:])
-     50, Loop is parallelizable
-
+         58, Generating reduction(max:error)
+         59, !$acc loop gang ! blockidx%x
+         60, !$acc loop vector(128) ! threadidx%x
+     58, Generating implicit copyin(a(:n-1,:m-1)) [if not already present]
+         Generating implicit copy(error) [if not already present]
+         Generating implicit copyout(anew(1:n-2,1:m-2)) [if not already present]
+     60, Loop is parallelizable
 ```
 
-Notice the differences on lines 48 and 50. The compiler recognized that the loops could be parallelized, but chose to break up the work in different ways. In a future lab you will learn more about how OpenACC breaks up the work, but for now it's enough to know that the compiler understood the differences between these two processors and changed its plan to make sense for each.
+Notice the differences on lines 59 and 60  . The compiler recognized that the loops could be parallelized, but chose to break up the work in different ways. In a future lab you will learn more about how OpenACC breaks up the work, but for now it's enough to know that the compiler understood the differences between these two processors and changed its plan to make sense for each.
 
 ## Conclusion
 
@@ -379,20 +372,18 @@ That's it, you now have the necessary tools to start using OpenACC in your appli
 
 ## Bonus Task
 
-It just so happens that the `acc parallel loop` directive isn't the only way we could have parallelized our code with OpenACC, it's just the easiest to understand. As a bonus task, [click here](Lab1_Kernels_C.ipynb) to learn about the `acc kernels` directive and how it differs from the approach we've already taken.
+It just so happens that the `!$acc parallel loop` directive isn't the only way we could have parallelized our code with OpenACC, it's just the easiest to understand. As a bonus task, [click here](Lab1_Kernels_Fortran.md) to learn about the `!$acc kernels` directive and how it differs from the approach we've already taken.
 
 ---
 
 ## Post-Lab Summary
 
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
+If you would like to download this lab for later viewing, you can execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
 
 
 ```bash
 %%bash
-rm -f openacc_files.zip
-rm -f *.o
+rm -f openacc_files.zip *.o laplace
 zip -r openacc_files.zip *
 ```
+

@@ -6,8 +6,8 @@ In this lab you will learn the basics of using OpenACC to parallelize a simple a
 Let's execute the cell below to display information about the GPUs running on the server by running the `pgaccelinfo` command, which ships with the PGI compiler that we will be using. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
 
 
-```python
-!pgaccelinfo
+```bash
+$ pgaccelinfo
 ```
 
 The output of the above command will vary according to which GPUs you have in your system. For example, if you are running the lab on a machine with an NVIDIA TITAN Xp GPU, you might would see the following:
@@ -170,8 +170,8 @@ For this lab we are using the PGI compiler to compiler our code. You will not ne
 **-fast**     : this compiler flag instructs the compiler to use what it believes are the best possible optimizations for our system
 
 
-```python
-! pgcc -fast -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
+```bash
+$ pgcc -fast -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
 ```
 
 ### Expected Output
@@ -278,8 +278,8 @@ Once you have made your changes, you can compile and run the application by runn
 Go ahead and build and run the code, noting both the error value at the 900th iteration and the total runtime. If the error value changed, you may have made a mistake. Don't forget the `reduction(max:error)` clause on the loop in the `calcNext` function!
 
 
-```python
-! pgcc -fast -ta=multicore -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
+```bash
+$ pgcc -fast -ta=multicore -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
 ```
 
 Here's the ouput you should see after running the above cell. Your total runtime may be slightly different, but it should be close. If you find yourself stuck on this part, you can take a look at [our solution](solutions/laplace2d.parallel.c). If you see a warning like `48, Accelerator restriction: size of the GPU copy of Anew,A is unknown`, you can safely ignore it.
@@ -321,8 +321,8 @@ Here's the new compiler option we'll be using:
 Notice above that I'm using something called *managed memory* for this task. Since our CPU and GPU each have their own physical memory I need to move the data between these memories. To simplify things this week, I'm telling the compiler to manage all of that data movement for me. Next week you'll learn how and why to manage the data movement yourself.
 
 
-```python
-! pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
+```bash
+$ pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
 ```
 
 Wow! That ran a lot faster! This demonstrates the power of using OpenACC to accelerate an application. I made very minimal code changes and could run my code on multicore CPUs and GPUs by only changing my compiler option. Very cool!
@@ -378,7 +378,6 @@ It just so happens that the `acc parallel loop` directive isn't the only way we 
 ## Post-Lab Summary
 
 If you would like to download this lab for later viewing, you can execute the following cell block to create a zip-file of the files you've been working on.
-
 
 ```bash
 %%bash
