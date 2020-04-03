@@ -371,7 +371,7 @@ That's it, you now have the necessary tools to start using OpenACC in your appli
 
 ## Bonus Task
 
-It just so happens that the `acc parallel loop` directive isn't the only way we could have parallelized our code with OpenACC, it's just the easiest to understand. As a bonus task, [click here](Lab1_Kernels_C.ipynb) to learn about the `acc kernels` directive and how it differs from the approach we've already taken.
+It just so happens that the `acc parallel loop` directive isn't the only way we could have parallelized our code with OpenACC, it's just the easiest to understand. As a bonus task, [click here](Lab1_Kernels_C.md) to learn about the `acc kernels` directive and how it differs from the approach we've already taken.
 
 ---
 
