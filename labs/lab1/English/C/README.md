@@ -382,7 +382,6 @@ If you would like to download this lab for later viewing, you can execute the fo
 
 ```bash
 %%bash
-rm -f openacc_files.zip
-rm -f *.o
+rm -f openacc_files.zip *.o laplace
 zip -r openacc_files.zip *
 ```
