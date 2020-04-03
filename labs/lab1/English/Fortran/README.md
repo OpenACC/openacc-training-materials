@@ -59,7 +59,7 @@ This gives us lots of details about the GPU, for instance the device number, the
 
 Our goal for this lab is to learn the first steps in accelerating an application with OpenACC. We advocate the following 3-step development cycle for OpenACC.
   
-<img src="../files/images/development-cycle.png" alt="OpenACC development cycle" width="50%">
+<img src="../images/development-cycle.png" alt="OpenACC development cycle" width="50%">
 
 **Analyze** your code to determine most likely places needing parallelization or optimization.
 
