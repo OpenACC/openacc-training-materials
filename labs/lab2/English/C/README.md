@@ -1,6 +1,6 @@
 # Data Management with OpenACC
 
-This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.ipynb).
+This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.md).
 
 You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
 
@@ -8,8 +8,8 @@ You will receive a warning five minutes before the lab instance shuts down. Reme
 Let's execute the cell below to display information about the GPUs running on the server. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
 
 
-```python
-!pgaccelinfo
+```bash
+$ pgaccelinfo
 ```
 
 ---
@@ -18,7 +18,7 @@ Let's execute the cell below to display information about the GPUs running on th
 
 Our goal for this lab is to use the OpenACC Data Directives to properly manage our data.
   
-<img src="/files/lab2/English/images/development_cycle.png" alt="OpenACC development cycle" width="50%">
+<img src="..//images/development_cycle.png" alt="OpenACC development cycle" width="50%">
 
 This is the OpenACC 3-Step development cycle.
 
@@ -34,27 +34,27 @@ We are currently tackling the **parallelize** and **optimize** steps by adding t
 
 ## Run the Code (With Managed Memory)
 
-In the [previous lab](/notebooks/lab1/English/C/README.ipynb), we added OpenACC loop directives and relied on a feature called CUDA Managed Memory to deal with the separate CPU & GPU memories for us. Just adding OpenACC to our two loop nests we achieved a considerable performance boost. However, managed memory is not compatible with all GPUs or all compilers and it sometimes performs worse than programmer-defined memory management. Let's start with our solution from the previous lab and use this as our performance baseline. Note the runtime from the follow cell.
+In the [previous lab](../../../lab1/English/C/README.md), we added OpenACC loop directives and relied on a feature called CUDA Managed Memory to deal with the separate CPU & GPU memories for us. Just adding OpenACC to our two loop nests we achieved a considerable performance boost. However, managed memory is not compatible with all GPUs or all compilers and it sometimes performs worse than programmer-defined memory management. Let's start with our solution from the previous lab and use this as our performance baseline. Note the runtime from the follow cell.
 
 
-```python
-!pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace_managed jacobi.c laplace2d.c && ./laplace_managed
+```bash
+$ pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace_managed jacobi.c laplace2d.c && ./laplace_managed
 ```
 
 ### Optional: Analyze the Code
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](/edit/lab2/English/C/jacobi.c)  
-[laplace2d.c](/edit/lab2/English/C/laplace2d.c)  
+[jacobi.c](jacobi.c)  
+[laplace2d.c](laplace2d.c)  
 
 ## Building Without Managed Memory
 
 Since we ultimately don't want to use CUDA Managed Memory, because it's less portable and often less performant than moving the data explicitly,, let's removed the managed option from our compiler options. Try building and running the code now. What happens?
 
 
-```python
-!pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
+```bash
+$ pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
 ```
 
 Uh-oh, this time our code failed to build. Let's take a look at the compiler output to understand why:
@@ -205,15 +205,15 @@ is equivalent to
 In order to build our example code without CUDA managed memory we need to give the compiler more information about the arrays. How do our two loop nests use the arrays `A` and `Anew`? The `calcNext` function take `A` as input and generates `Anew` as output, but also needs Anew copied in because we need to maintain that *hot* boundary at the top. So you will want to add a `copyin` clause for `A` and a `copy` clause for `Anew` on your region. The `swap` function takes `Anew` as input and `A` as output, so it needs the exact opposite data clauses. It's also necessary to tell the compiler the size of the two arrays by using array shaping. Our arrays are `m` times `n` in size, so we'll tell the compiler their shape starts at `0` and has `n*m` elements, using the syntax above. Go ahead and add data clauses to the two `parallel loop` directives in [laplace2d.c](/edit/lab2/English/C/laplace2d.c). Then try to build again.
 
 
-```python
-!pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
+```bash
+$ pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
 ```
 
 Well, the good news is that it should have built correctly and run. If it didn't, check your data clauses carefully. The bad news is that now it runs a whole lot slower than it did before. Let's try to figure out why. The PGI compiler provides your executable with built-in timers, so let's start by enabling them and seeing what it shows. You can enable these timers by setting the environment variable `PGI_ACC_TIME=1`. Run the cell below to get the program output with the built-in profiler enabled.
 
 
-```python
-!pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && PGI_ACC_TIME=1 ./laplace
+```bash
+$ pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && PGI_ACC_TIME=1 ./laplace
 ```
 
 Your output should look something like what you see below.
@@ -338,8 +338,8 @@ Use the following links to edit our laplace code. Add a structured data directiv
 Then, run the following script to check you solution. You code should run just as good as (or slightly better) than our managed memory code.
 
 
-```python
-!pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
+```bash
+$ pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
 ```
 
 Did your runtime go down? It should have but the answer should still match the previous runs. Let's take a look at the profiler now.
@@ -399,8 +399,8 @@ As an example, let's create a version of our laplace code where we want to print
 Let's run this code (on a very small data set, so that we don't overload the console by printing thousands of numbers).
 
 
-```python
-!cd update && pgcc -fast -ta=tesla -Minfo=accel -o laplace_no_update jacobi.c laplace2d.c && ./laplace_no_update 10 10 && cd -
+```bash
+$ cd update && pgcc -fast -ta=tesla -Minfo=accel -o laplace_no_update jacobi.c laplace2d.c && ./laplace_no_update 10 10 && cd -
 ```
 
 We can see that the array is not changing. This is because the host copy of `A` is not being *updated* between loop iterations. Let's add the update directive, and see how the output changes.
@@ -436,8 +436,8 @@ We can see that the array is not changing. This is because the host copy of `A` 
 ```
 
 
-```python
-!cd update/solution && pgcc -fast -ta=tesla -Minfo=accel -o laplace_update jacobi.c laplace2d.c && ./laplace_update 10 10 && cd -
+```bash
+$ cd update/solution && pgcc -fast -ta=tesla -Minfo=accel -o laplace_update jacobi.c laplace2d.c && ./laplace_update 10 10 && cd -
 ```
 
 Although you weren't required to add an `update` directive to this example code, except in the contrived example above, it's an extremely important directive for real applications because it allows you to do I/O or communication necessary for your code to execute without having to pay the cost of allocating and decallocating arrays on the device each time you do so.
@@ -458,9 +458,7 @@ If you would like some additional lessons on using OpenACC, there is an Introduc
 
 ## Post-Lab Summary
 
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
+You can execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
 
 
 ```bash
@@ -468,5 +466,3 @@ You can also execute the following cell block to create a zip-file of the files 
 rm -f openacc_files.zip *.o laplace laplace_managed
 zip -r openacc_files.zip *
 ```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)
