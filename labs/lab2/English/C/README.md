@@ -134,7 +134,7 @@ At this point, we have two seperate copies of `A`. The CPU copy is full of 0's, 
 
 This image offers another step-by-step example of using the copy clause.
 
-![copy_step_by_step](../files/images/copy_step_by_step.png)
+![copy_step_by_step](../images/copy_step_by_step.png)
 
 We are also able to copy multiple arrays at once by using the following syntax.
 
@@ -202,7 +202,7 @@ is equivalent to
 
 ## Making the Sample Code Work without Managed Memory
 
-In order to build our example code without CUDA managed memory we need to give the compiler more information about the arrays. How do our two loop nests use the arrays `A` and `Anew`? The `calcNext` function take `A` as input and generates `Anew` as output, but also needs Anew copied in because we need to maintain that *hot* boundary at the top. So you will want to add a `copyin` clause for `A` and a `copy` clause for `Anew` on your region. The `swap` function takes `Anew` as input and `A` as output, so it needs the exact opposite data clauses. It's also necessary to tell the compiler the size of the two arrays by using array shaping. Our arrays are `m` times `n` in size, so we'll tell the compiler their shape starts at `0` and has `n*m` elements, using the syntax above. Go ahead and add data clauses to the two `parallel loop` directives in [laplace2d.c](/edit/lab2/English/C/laplace2d.c). Then try to build again.
+In order to build our example code without CUDA managed memory we need to give the compiler more information about the arrays. How do our two loop nests use the arrays `A` and `Anew`? The `calcNext` function take `A` as input and generates `Anew` as output, but also needs Anew copied in because we need to maintain that *hot* boundary at the top. So you will want to add a `copyin` clause for `A` and a `copy` clause for `Anew` on your region. The `swap` function takes `Anew` as input and `A` as output, so it needs the exact opposite data clauses. It's also necessary to tell the compiler the size of the two arrays by using array shaping. Our arrays are `m` times `n` in size, so we'll tell the compiler their shape starts at `0` and has `n*m` elements, using the syntax above. Go ahead and add data clauses to the two `parallel loop` directives in [laplace2d.c](laplace2d.c). Then try to build again.
 
 
 ```bash
@@ -255,12 +255,12 @@ Accelerator Kernel Timing data
 
  The total runtime was roughly 190 with the profiler turned on, but only about 130 seconds without. We can see that `calcNext` required roughly 53 seconds to run by looking at the `time(us)` line under the `calcNext` line.  We can also look at the `data region` section and determine that 34 seconds were spent copying data to the device and 17 seconds copying data out for the device. The `swap` function has very similar numbers. That means that the program is actually spending very little of its runtime doing calculations. Why is the program copying so much data around? The screenshot below comes from the Nsight Systems profiler and shows part of one step of our outer while loop. The greenish and pink colors are data movement and the blue colors are our kernels (calcNext and swap). Notice that for each kernel we have copies to the device (greenish) before and copies from the device (pink) after. The means we have 4 segments of data copies for every iteration of the outer while loop.
  
-![Profile before adding data region](../files/images/pre-data-c.png)
+![Profile before adding data region](../images/pre-data-c.png)
  
  Let's contrast this with the managed memory version. The image below shows the same program built with managed memory. Notice that there's a lot of "data migration" at the first kernel launch, where the data is first used, but there's no data movement between kernels after that. This tells me that the data movement isn't really needed between these kernels, but we need to tell the compiler that. 
  
 
-![Profile using managed memory](../files/images/managed-c.png)
+![Profile using managed memory](../images/managed-c.png)
 
 Because the while loop and our kernels are in two separate files, the compiler can't really see that the data is reused on the GPU between those function. We need to move our data movement up to a higher level where we can reuse it for each step through the program. To do that, we'll add OpenACC data directives.
 
@@ -333,7 +333,7 @@ void copy(int *A, int *B, int N)
 
 Use the following links to edit our laplace code. Add a structured data directive to properly handle the arrays `A` and `Anew`. We've already added data clauses to our two functions containing our GPU kernels, so this time we'll move up the calltree and add a structured data region around our while loop in the main program. Think about the input and output to this while loop and choose your data clauses for `A` and `Anew` accordingly.
 
-[jacobi.c](/edit/lab2/English/C/jacobi.c)   
+[jacobi.c](jacobi.c)   
 
 Then, run the following script to check you solution. You code should run just as good as (or slightly better) than our managed memory code.
 
@@ -344,7 +344,7 @@ $ pgcc -fast -ta=tesla -Minfo=accel -o laplace jacobi.c laplace2d.c && ./laplace
 
 Did your runtime go down? It should have but the answer should still match the previous runs. Let's take a look at the profiler now.
 
-![Profile after adding data region](../files/images/post-data-c.png)
+![Profile after adding data region](../images/post-data-c.png)
 
 Notice that we no longer see the greenish and pink bars on either side of each iteration, like we did before. Instead, we see a red OpenACC `Enter Data` region which contains some greenish bars corresponding to host-to-device data transfer preceding any GPU kernel launches. This is because our data movement is now handled by the outer data region, not the data clauses on each loop. Data clauses count how many times an array has been placed into device memory and only copies data the outermost time it encounters an array. This means that the data clauses we added to our two functions are now used only for shaping and no data movement will actually occur here anymore, thanks to our outer `data` region.
 
