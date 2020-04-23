@@ -1,6 +1,6 @@
 # Data Management with OpenACC
 
-This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/README.ipynb).
+This version of the lab is intended for Fortran programmers. The C/C++ version of this lab is available [here](../C/README.md).
 
 You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
 
@@ -8,8 +8,8 @@ You will receive a warning five minutes before the lab instance shuts down. Reme
 Let's execute the cell below to display information about the GPUs running on the server. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
 
 
-```python
-!pgaccelinfo
+```bash
+$ pgaccelinfo
 ```
 
 ---
@@ -18,7 +18,7 @@ Let's execute the cell below to display information about the GPUs running on th
 
 Our goal for this lab is to use the OpenACC Data Directives to properly manage our data.
   
-<img src="/files/lab2/English/images/development_cycle.png" alt="OpenACC development cycle" width="50%">
+<img src="../images/development_cycle.png" alt="OpenACC development cycle" width="50%">
 
 This is the OpenACC 3-Step development cycle.
 
@@ -34,27 +34,27 @@ We are currently tackling the **parallelize** and **optimize** steps by adding t
 
 ## Run the Code (With Managed Memory)
 
-In the [previous lab](/notebooks/lab1/English/Fortran/README.ipynb), we added OpenACC loop directives and relied on a feature called CUDA Managed Memory to deal with the separate CPU & GPU memories for us. Just adding OpenACC to our two loop nests we achieved a considerable performance boost. However, managed memory is not compatible with all GPUs or all compilers and it sometimes performs worse than programmer-defined memory management. Let's start with our solution from the previous lab and use this as our performance baseline. Note the runtime from the follow cell.
+In the [previous lab](../../../lab1/English/Fortran/README.md), we added OpenACC loop directives and relied on a feature called CUDA Managed Memory to deal with the separate CPU & GPU memories for us. Just adding OpenACC to our two loop nests we achieved a considerable performance boost. However, managed memory is not compatible with all GPUs or all compilers and it sometimes performs worse than programmer-defined memory management. Let's start with our solution from the previous lab and use this as our performance baseline. Note the runtime from the follow cell.
 
 
-```python
-!pgfortran -fast -ta=tesla,managed -Minfo=accel -o laplace_managed laplace2d.f90 jacobi.f90 && ./laplace_managed
+```bash
+$ pgfortran -fast -ta=tesla,managed -Minfo=accel -o laplace_managed laplace2d.f90 jacobi.f90 && ./laplace_managed
 ```
 
 ### Optional: Analyze the Code
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.f90](/edit/lab2/English/Fortran/jacobi.f90)  
-[laplace2d.f90](/edit/lab2/English/Fortran/laplace2d.f90)  
+[jacobi.f90](jacobi.f90)  
+[laplace2d.f90](laplace2d.f90)  
 
 ## Building Without Managed Memory
 
 Since we ultimately don't want to use CUDA Managed Memory, because it's less portable and often less performant than moving the data explicitly, let's removed the managed option from our compiler options. Try building and running the code now. What happens?
 
 
-```python
-!pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && ./laplace
+```bash
+$ pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && ./laplace
 ```
 
 OK, so we're able to run, but we're running very slowly. We'll address that in just a moment, but first we should address an issue that you might encounter if you ever try this same exercise in C/C++. Because Fortran arrays contain all of the necessary size and shape information for the compiler to moved them to and from the device, this step works. Had you been programming in C/C++, however, the compiler would lack the information to move the arrays. Instead, you would have seen the following:
@@ -130,7 +130,7 @@ At this point, we have two seperate copies of `A`. The CPU copy is full of 0's, 
 
 This image offers another step-by-step example of using the copy clause.
 
-![copy_step_by_step](../files/images/copy_step_by_step_no_code.png)
+![copy_step_by_step](../images/copy_step_by_step_no_code.png)
 
 We are also able to copy multiple arrays at once by using the following syntax.
 
@@ -201,18 +201,18 @@ And since we're in Fortran, this can be shorted even more to just
 
 ## Making the Sample Code Work without Managed Memory
 
-In order to build our example code without CUDA managed memory we need to give the compiler more information about the arrays. How do our two loop nests use the arrays `A` and `Anew`? The `calcNext` function take `A` as input and generates `Anew` as output, but also needs Anew copied in because we need to maintain that *hot* boundary at the top. So you will want to add a `copyin` clause for `A` and a `copy` clause for `Anew` on your region. The `swap` function takes `Anew` as input and `A` as output, so it needs the exact opposite data clauses. It's also necessary to tell the compiler the size of the two arrays by using array shaping. Our arrays are `m` times `n` in size, so we need to tell the compiler their shapes using the syntax above. Since we have already provided array shaping information in our `initialize` function using `allocate`, we can simply allow the compiler to use this information. Since our arrays are two dimensional, we can simply use `(:,:)` as our shape for both arrays. This tells the compiler to grab the existing shaping information from when these arrays were allocated. Go ahead and add data clauses to the two `parallel loop` directives in [laplace2d.f90](/edit/lab2/English/Fortran/laplace2d.f90). Then try to build again.
+In order to build our example code without CUDA managed memory we need to give the compiler more information about the arrays. How do our two loop nests use the arrays `A` and `Anew`? The `calcNext` function take `A` as input and generates `Anew` as output, but also needs Anew copied in because we need to maintain that *hot* boundary at the top. So you will want to add a `copyin` clause for `A` and a `copy` clause for `Anew` on your region. The `swap` function takes `Anew` as input and `A` as output, so it needs the exact opposite data clauses. It's also necessary to tell the compiler the size of the two arrays by using array shaping. Our arrays are `m` times `n` in size, so we need to tell the compiler their shapes using the syntax above. Since we have already provided array shaping information in our `initialize` function using `allocate`, we can simply allow the compiler to use this information. Since our arrays are two dimensional, we can simply use `(:,:)` as our shape for both arrays. This tells the compiler to grab the existing shaping information from when these arrays were allocated. Go ahead and add data clauses to the two `parallel loop` directives in [laplace2d.f90](laplace2d.f90). Then try to build again.
 
 
-```python
-!pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && ./laplace
+```bash
+$ pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && ./laplace
 ```
 
 Well, the good news is that it should have built correctly and run. If it didn't, check your data clauses carefully. The bad news is that now it runs a whole lot slower than it did before. Let's try to figure out why. The PGI compiler provides your executable with built-in timers, so let's start by enabling them and seeing what it shows. You can enable these timers by setting the environment variable `PGI_ACC_TIME=1`. Run the cell below to get the program output with the built-in profiler enabled.
 
 
-```python
-!pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && PGI_ACC_TIME=1 ./laplace
+```bash
+$ pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && PGI_ACC_TIME=1 ./laplace
 ```
 
 Your output should look something like what you see below.
@@ -254,12 +254,12 @@ Accelerator Kernel Timing data
 
  The total runtime was roughly 130 seconds with the profiler turned on (roughly 120 without). We can see that `calcNext` required roughly 53 seconds to run by looking at the `time(us)` line under the `calcNext` line. We can also look at the `data region` section and determine that 34 seconds were spent copying data to the device and 17 seconds copying data out for the device. The `swap` function has very similar numbers. That means that the program is actually spending very little of its runtime doing calculations. Why is the program copying so much data around? The screenshot below comes from the Nsight Systems profiler and shows part of one step of our outer while loop. The greenish and pink colors are data movement and the blue colors are our kernels (calcNext and swap). Notice that for each kernel we have copies to the device (greenish) before and copies from the device (pink) after. The means we have 4 segments of data copies for every iteration of the outer while loop.
  
-![Profile before adding data region](../files/images/pre-data-f.png)
+![Profile before adding data region](../images/pre-data-f.png)
  
  Let's contrast this with the managed memory version. The image below shows the same program built with managed memory. Notice that there's a lot of "data migration" at the beginning, where the data is first used, but there's no data movement between the loops. This tells me that the data movement isn't really needed between these loops, but we need to tell the compiler that. 
  
 
-![Profile using managed memory](../files/images/managed-f.png)
+![Profile using managed memory](../images/managed-f.png)
 
 Because the loops are in two separate files, the compiler can't really see that the data is reused on the GPU between those function. We need to move our data movement up to a higher level where we can reuse it for each step through the program. To do that, we'll add OpenACC data directives.
 
@@ -328,18 +328,18 @@ end subroutine
 
 Use the following links to edit our laplace code. Add a structured data directive to properly handle the arrays `A` and `Anew`. We've already added data clauses to our two functions, so this time we'll move up the calltree and add a structured data region around our while loop in the main program. Think about the input and output to this while loop and choose your data clauses for `A` and `Anew` accordingly.
 
-[jacobi.f90](/edit/lab2/English/Fortran/jacobi.f90)   
+[jacobi.f90](jacobi.f90)   
 
 Then, run the following script to check you solution. You code should run just as good as (or slightly better) than our managed memory code.
 
 
-```python
-!pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && ./laplace
+```bash
+$ pgfortran -fast -ta=tesla -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && ./laplace
 ```
 
 Did your runtime go down? It should have but the answer should still match the previous runs. Let's take a look at the profiler now.
 
-![Profile after adding data region](../files/images/post-data-f.png)
+![Profile after adding data region](../images/post-data-f.png)
 
 Notice that we no longer see the greenish and pink bars on either side of each iteration, like we did before. Instead, we see a red OpenACC `Enter Data` region which contains some greenish bars corresponding to host-to-device data transfer preceding any GPU kernel launches. This is because our data movement is now handled by the outer data region, not the data clauses on each loop. Data clauses count how many times an array has been placed into device memory and only copies data the outermost time it encounters an array. This means that the data clauses we added to our two functions are now used only for shaping and no data movement will actually occur here anymore, thanks to our outer `data` region.
 
@@ -387,7 +387,7 @@ end do
 !$acc end data
 ```
 
-Let's run this code (on a very small data set, so that we don't overload the console by printing thousands of numbers). In order to do that you will have to edit [jacobi.f90](/edit/lab2/English/Fortran/jacobi.f90) and change the dimensions of the problem from 4096 to 10. Otherwise the code will take a long time to run and it will produce a great deal of output to the screen.
+Let's run this code (on a very small data set, so that we don't overload the console by printing thousands of numbers). In order to do that you will have to edit [jacobi.f90](jacobi.f90) and change the dimensions of the problem from 4096 to 10. Otherwise the code will take a long time to run and it will produce a great deal of output to the screen.
 
 **Once again**, please change the dimenions of the problem, `m` and `n` to 10. Originally the line in jacobi.f90 will be the following.
 
@@ -401,8 +401,8 @@ integer, parameter :: n=10, m=10, iter_max=1000
 ```
 
 
-```python
-!cd update && pgfortran -fast -ta=tesla -Minfo=accel -o laplace_no_update laplace2d.f90 jacobi.f90 && ./laplace_no_update ; cd -
+```bash
+$ cd update && pgfortran -fast -ta=tesla -Minfo=accel -o laplace_no_update laplace2d.f90 jacobi.f90 && ./laplace_no_update ; cd -
 ```
 
 We can see that the array is not changing. This is because the host copy of `A` is not being **updated** between loop iterations. Let's add the update directive, and see how the output changes.
@@ -433,8 +433,8 @@ end do
 ```
 
 
-```python
-!cd update/solution && pgfortran -fast -ta=tesla -Minfo=accel -o laplace_update laplace2d.f90 jacobi.f90 && ./laplace_update
+```bash
+$ cd update/solution && pgfortran -fast -ta=tesla -Minfo=accel -o laplace_update laplace2d.f90 jacobi.f90 && ./laplace_update
 ```
 
 Although you weren't required to add an `update` directive to this example code, except in the contrived example above, it's an extremely important directive for real applications because it allows you to do I/O or communication necessary for your code to execute without having to pay the cost of allocating and decallocating arrays on the device each time you do so.
@@ -455,9 +455,7 @@ If you would like some additional lessons on using OpenACC, there is an Introduc
 
 ## Post-Lab Summary
 
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
+You can execute the following cell block to create a zip-file of the files you've been working on.
 
 
 ```bash
@@ -465,5 +463,3 @@ You can also execute the following cell block to create a zip-file of the files 
 rm -f openacc_files.zip laplace laplace_managed *.o *.mod update/*.o update/*.mod update/solution/*.o update/solution/*.mod update/laplace_no_update update/solution/laplace_update
 zip -r openacc_files.zip *
 ```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)
