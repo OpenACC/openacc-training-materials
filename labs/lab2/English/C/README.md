@@ -458,7 +458,7 @@ If you would like some additional lessons on using OpenACC, there is an Introduc
 
 ## Post-Lab Summary
 
-You can execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
+You can execute the following cell block to create a zip-file of the files you've been working on.
 
 
 ```bash
