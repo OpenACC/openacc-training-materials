@@ -463,6 +463,6 @@ You can execute the following cell block to create a zip-file of the files you'v
 
 ```bash
 %%bash
-rm -f openacc_files.zip *.o laplace laplace_managed
+rm -f openacc_files.zip *.o laplace laplace_managed update/*.o update/solution/*.o update/laplace_no_update update/solution/laplace_update
 zip -r openacc_files.zip *
 ```

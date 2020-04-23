@@ -42,6 +42,7 @@ program jacobi
 
   iter=0
   
+  !$acc data copyin(A(n,m), Anew(n,m))
   do while ( error .gt. tol .and. iter .lt. iter_max )
 
     error = calcNext(A, Anew, m, n)
@@ -58,7 +59,8 @@ program jacobi
 
     iter = iter + 1
 
-  end do
+ end do
+ !$acc end data
 
   call cpu_time(stop_time) 
   write(*,'(a,f10.3,a)')  ' completed in ', stop_time-start_time, ' seconds'

@@ -51,7 +51,7 @@ program jacobi
 
     if(mod(iter,100).eq.0 ) then
       write(*,'(i5,f10.6)'), iter, error
-      !acc update self(A(n,m))
+      !acc update self(A(:,:))
       do i=1,n 
         do j=1,m 
           write(*,'(f10.2)', advance="no"), A(i,j) 
