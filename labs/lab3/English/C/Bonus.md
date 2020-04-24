@@ -4,7 +4,7 @@
 
 This is our last optimization, and arguably the most important one. In OpenACC, **Gang Worker Vector** is used to define additional levels of parallelism. Specifically for NVIDIA GPUs, gang, worker, and vector will specify the *decomposition* of our loop iterations to GPU threads. Each loop will have an optimal Gang/Worker/Vector implementation, and finding that correct implementation will often take a bit of thinking, and possibly some trial and error. So let's explain how the `gang`, `worker`, and `vector` clauses actually work.
 
-![gang_worker_vector.png](../files/images/gang_worker_vector.png)
+![gang_worker_vector.png](../images/gang_worker_vector.png)
 
 This image represents a single **gang**. When parallelizing our **for loops**, the **loop iterations** will be **broken up evenly** among a number of gangs. Each gang will contain a number of **threads**. These threads are organized into **blocks**. A **worker** is a row of threads. In the above graphic, there are 3 **workers**, which means that there are 3 rows of threads. The **vector** refers to how long each row is. So in the above graphic, the vector is 8, because each row is 8 threads long.
 
@@ -160,14 +160,14 @@ for(int i = 0; i < N; i++)
 
 Use the following link to edit our code. Replace our ealier clauses with **gang, worker, and vector** To reorganize our thread blocks. Try it using a few different numbers, but always keep the vector length as a **multiple of 32** to fully utilize **warps**.
 
-[laplace2d.c](../../../../edit/lab3/English/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
 
 
-```python
-pgcc -fast -ta=tesla -Minfo=accel -o laplace_gang_worker_vector jacobi.c laplace2d.c && ./laplace_gang_worker_vector
+```bash
+$ pgcc -fast -ta=tesla -Minfo=accel -o laplace_gang_worker_vector jacobi.c laplace2d.c && ./laplace_gang_worker_vector
 ```
 
 In our tests, it was difficult to beat our earlier code using `gang`, `worker`, and `vector` clauses, compared to the `tile` clause, but it is very common when optimizing real OpenACC codes to tweak loop mappings using these clauses and adjusting the vector length, so keep these clauses in the back of your mind for the future.
