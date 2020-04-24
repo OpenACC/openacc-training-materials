@@ -1,6 +1,6 @@
 # OpenACC Loop Optimizations
 
-This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.ipynb).
+This version of the lab is intended for C/C++ programmers. The Fortran version of this lab is available [here](../Fortran/README.md).
 
 You will receive a warning five minutes before the lab instance shuts down. Remember to save your work! If you are about to run out of time, please see the [Post-Lab](#Post-Lab-Summary) section for saving this lab to view offline later.
 
@@ -8,8 +8,8 @@ You will receive a warning five minutes before the lab instance shuts down. Reme
 Let's execute the cell below to display information about the GPUs running on the server. To do this, execute the cell block below by giving it focus (clicking on it with your mouse), and hitting Ctrl-Enter, or pressing the play button in the toolbar above.  If all goes well, you should see some output returned below the grey cell.
 
 
-```python
-!pgaccelinfo
+```bash
+$ pgaccelinfo
 ```
 
 ---
@@ -18,7 +18,7 @@ Let's execute the cell below to display information about the GPUs running on th
 
 Our goal for this lab is to use the OpenACC Loop clauses to opimize our Parallel Loops.
   
-<img src="../files/images/development-cycle.png" alt="OpenACC development cycle" width="50%">
+<img src="../images/development-cycle.png" alt="OpenACC development cycle" width="50%">
 
 This is the OpenACC 3-Step development cycle.
 
@@ -37,16 +37,16 @@ We are currently tackling the **optimize** step. We will include the OpenACC loo
 In the previous labs, we have built up a working parallel code that can run on both a multicore CPU and a GPU. Let's run the code and note the performance, so that we can compare the runtime to any future optimizations we make. The code should take about 1 or 2 seconds to run at this point.
 
 
-```python
-!pgcc -fast -ta=tesla -Minfo=accel -o laplace_baseline laplace2d.c jacobi.c && ./laplace_baseline
+```bash
+$ pgcc -fast -ta=tesla -Minfo=accel -o laplace_baseline laplace2d.c jacobi.c && ./laplace_baseline
 ```
 
 ### Optional: Analyze the Code
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](/edit/lab3/English/C/jacobi.c)  
-[laplace2d.c](/edit/lab3/English/C/laplace2d.c)  
+[jacobi.c](jacobi.c)  
+[laplace2d.c](laplace2d.c)  
 
 ---
 
@@ -101,14 +101,14 @@ This code will combine the 3-dimensional loop nest into a single 1-dimensional l
 
 Use the following link to edit our code. Use the **collapse clause** to collapse our multi-dimensional loops into a single dimensional loop.
 
-[laplace2d.c](/edit/lab3/English/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
 
 
-```python
-!pgcc -ta=tesla -Minfo=accel -o laplace_collapse jacobi.c laplace2d.c && ./laplace_collapse
+```bash
+$ pgcc -ta=tesla -Minfo=accel -o laplace_collapse jacobi.c laplace2d.c && ./laplace_collapse
 ```
 
 Did your code speed-up at all? Mine actually slowed down by about 0.1 seconds. 
@@ -206,14 +206,14 @@ In this code, we have 128x128 loop iterations, which are being broken up into 32
 
 Use the following link to edit our code. Replace the `collapse` clause with the `tile` clause to break our multi-dimensional loops into smaller tiles. Try using a variety of different tile sizes, but for now keep one of the dimensions as a **multiple of 32**. We will talk later about why this is important.
 
-[laplace2d.c](/edit/lab3/English/C/laplace2d.c)  
+[laplace2d.c](laplace2d.c)  
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
 
 
-```python
-!pgcc -ta=tesla -Minfo=accel -o laplace_tile jacobi.c laplace2d.c && ./laplace_tile
+```bash
+$ pgcc -ta=tesla -Minfo=accel -o laplace_tile jacobi.c laplace2d.c && ./laplace_tile
 ```
 
 Unlike the `collapse` clause, we need to do some experimentation to find the best value for our code. Here's some values that I tried and their results. I know that the compiler is using a vector length of 128, according to the compiler feedback above, so I started with values that multiplied to 128, but then tried a few more values. For the speed-up column I'm comparing against the results from using the `collapse` clause.
@@ -250,20 +250,15 @@ Our primary goal when using OpenACC is to parallelize our large for loops. To ac
 
 ## Bonus Task (More about Gangs, Workers, and Vectors)
 
-This week's bonus task is to learn a bit more about how OpenACC breaks up the loop iterations into *gangs*, *workers*, and *vectors*, which was discussed very briefly in the first lab. [Click Here](Bonus.ipynb) for more information about these *levels of parallelism*.
+This week's bonus task is to learn a bit more about how OpenACC breaks up the loop iterations into *gangs*, *workers*, and *vectors*, which was discussed very briefly in the first lab. [Click Here](Bonus.md) for more information about these *levels of parallelism*.
 
 
 ## Post-Lab Summary
 
-If you would like to download this lab for later viewing, it is recommend you go to your browsers File menu (not the Jupyter notebook file menu) and save the complete web page.  This will ensure the images are copied down as well.
-
-You can also execute the following cell block to create a zip-file of the files you've been working on, and download it with the link below.
-
+You can execute the following cell block to create a zip-file of the files you've been working on.
 
 ```bash
 %%bash
 rm -f openacc_files.zip *.o laplace_baseline laplace_collapse laplace_tile
 zip -r openacc_files.zip *
 ```
-
-**After** executing the above zip command, you should be able to download the zip file [here](files/openacc_files.zip)
