@@ -11,3 +11,4 @@ __MACOSX
 *.o
 *.mod
 a.out
+__pycache__
