@@ -57,7 +57,7 @@ OK, now it's your turn to try the `kernels` approach. Open [laplace2d.c](laplace
 
 
 ```bash
-$ pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
+$  pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
 ```
 
 We should see similar performance to the previous version, but for some reason we don't. Let's see if the compiler output tells us anything.
@@ -102,7 +102,7 @@ You'll need to add `acc loop independent` to the loop nest in the `swap` functio
 
 
 ```bash
-$ pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
+$  pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace jacobi.c laplace2d.c && echo "Compilation Successful!" && ./laplace
 ```
 
 ## Conclusions

@@ -53,7 +53,7 @@ OK, now it's your turn to try the `kernels` approach. Open [laplace2d.f90](lapla
 
 
 ```bash
-$ pgfortran -fast -ta=tesla:managed -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && echo "Compilation Successful!" && ./laplace
+$  pgfortran -fast -ta=tesla:managed -Minfo=accel -o laplace laplace2d.f90 jacobi.f90 && echo "Compilation Successful!" && ./laplace
 ```
 
     laplace2d.f90:

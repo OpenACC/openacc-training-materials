@@ -18,7 +18,7 @@ $ pgaccelinfo
 
 Our goal for this lab is to use the OpenACC Data Directives to properly manage our data.
   
-<img src="..//images/development_cycle.png" alt="OpenACC development cycle" width="50%">
+<img src="/files/lab2/English/images/development_cycle.png" alt="OpenACC development cycle" width="50%">
 
 This is the OpenACC 3-Step development cycle.
 
@@ -34,7 +34,7 @@ We are currently tackling the **parallelize** and **optimize** steps by adding t
 
 ## Run the Code (With Managed Memory)
 
-In the [previous lab](../../../lab1/English/C/README.md), we added OpenACC loop directives and relied on a feature called CUDA Managed Memory to deal with the separate CPU & GPU memories for us. Just adding OpenACC to our two loop nests we achieved a considerable performance boost. However, managed memory is not compatible with all GPUs or all compilers and it sometimes performs worse than programmer-defined memory management. Let's start with our solution from the previous lab and use this as our performance baseline. Note the runtime from the follow cell.
+In the [previous lab](/notebooks/lab1/English/C/README.md), we added OpenACC loop directives and relied on a feature called CUDA Managed Memory to deal with the separate CPU & GPU memories for us. Just adding OpenACC to our two loop nests we achieved a considerable performance boost. However, managed memory is not compatible with all GPUs or all compilers and it sometimes performs worse than programmer-defined memory management. Let's start with our solution from the previous lab and use this as our performance baseline. Note the runtime from the follow cell.
 
 
 ```bash
@@ -45,8 +45,9 @@ $ pgcc -fast -ta=tesla:managed -Minfo=accel -o laplace_managed jacobi.c laplace2
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](jacobi.c)  
-[laplace2d.c](laplace2d.c)  
+[jacobi.c](jacobi.c) 
+
+[laplace2d.c](laplace2d.c) 
 
 ## Building Without Managed Memory
 
@@ -333,7 +334,7 @@ void copy(int *A, int *B, int N)
 
 Use the following links to edit our laplace code. Add a structured data directive to properly handle the arrays `A` and `Anew`. We've already added data clauses to our two functions containing our GPU kernels, so this time we'll move up the calltree and add a structured data region around our while loop in the main program. Think about the input and output to this while loop and choose your data clauses for `A` and `Anew` accordingly.
 
-[jacobi.c](jacobi.c)   
+[jacobi.c](jacobi.c)  
 
 Then, run the following script to check you solution. You code should run just as good as (or slightly better) than our managed memory code.
 
@@ -455,14 +456,3 @@ Relying on managed memory to handle data management can reduce the effort the pr
 If you would like some additional lessons on using OpenACC, there is an Introduction to OpenACC video series available from the OpenACC YouTube page. The fifth video in the series covers a lot of the content that was covered in this lab.  
 
 [Introduction to Parallel Programming with OpenACC - Part 5](https://youtu.be/0zTX7-CPvV8)  
-
-## Post-Lab Summary
-
-You can execute the following cell block to create a zip-file of the files you've been working on.
-
-
-```bash
-%%bash
-rm -f openacc_files.zip *.o laplace laplace_managed update/*.o update/solution/*.o update/laplace_no_update update/solution/laplace_update
-zip -r openacc_files.zip *
-```

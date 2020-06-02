@@ -139,7 +139,8 @@ end do
 
 Use the following link to edit our code. Replace our ealier clauses with **gang, worker, and vector** To reorganize our thread blocks. Try it using a few different numbers, but always keep the vector length as a **multiple of 32** to fully utilize **warps**.
 
-[laplace2d.f90](laplace2d.f90)  
+[laplace2d.f90](laplace2d.f90) 
+
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.

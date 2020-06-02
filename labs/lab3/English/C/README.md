@@ -45,8 +45,9 @@ $ pgcc -fast -ta=tesla -Minfo=accel -o laplace_baseline laplace2d.c jacobi.c && 
 
 If you would like a refresher on the code files that we are working on, you may view both of them using the two links below.
 
-[jacobi.c](jacobi.c)  
-[laplace2d.c](laplace2d.c)  
+[jacobi.c](jacobi.c) 
+
+[laplace2d.c](laplace2d.c) 
 
 ---
 
@@ -101,7 +102,8 @@ This code will combine the 3-dimensional loop nest into a single 1-dimensional l
 
 Use the following link to edit our code. Use the **collapse clause** to collapse our multi-dimensional loops into a single dimensional loop.
 
-[laplace2d.c](laplace2d.c)  
+[laplace2d.c](laplace2d.c) 
+
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
@@ -206,7 +208,8 @@ In this code, we have 128x128 loop iterations, which are being broken up into 32
 
 Use the following link to edit our code. Replace the `collapse` clause with the `tile` clause to break our multi-dimensional loops into smaller tiles. Try using a variety of different tile sizes, but for now keep one of the dimensions as a **multiple of 32**. We will talk later about why this is important.
 
-[laplace2d.c](laplace2d.c)  
+[laplace2d.c](laplace2d.c) 
+
 (make sure to save your code with ctrl+s)
 
 Then run the following script to see how the code runs.
@@ -252,13 +255,3 @@ Our primary goal when using OpenACC is to parallelize our large for loops. To ac
 
 This week's bonus task is to learn a bit more about how OpenACC breaks up the loop iterations into *gangs*, *workers*, and *vectors*, which was discussed very briefly in the first lab. [Click Here](Bonus.md) for more information about these *levels of parallelism*.
 
-
-## Post-Lab Summary
-
-You can execute the following cell block to create a zip-file of the files you've been working on.
-
-```bash
-%%bash
-rm -f openacc_files.zip *.o laplace_baseline laplace_collapse laplace_tile
-zip -r openacc_files.zip *
-```
