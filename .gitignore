@@ -18,3 +18,4 @@ a.out
 *.nvprof
 *.nvvp
 *.zip
+__pycache__
