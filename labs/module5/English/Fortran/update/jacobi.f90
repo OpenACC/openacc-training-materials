@@ -14,7 +14,6 @@
 ! limitations under the License.
 !
 program jacobi
-  use nvtx
   use laplace2d
   implicit none
   integer, parameter :: fp_kind=kind(1.0d0)
@@ -33,9 +32,7 @@ program jacobi
   ! A(0,:)    = 1.0_fp_kind
   ! Anew(0,:) = 1.0_fp_kind
   
-  call nvtxStartRange("init")
   call initialize(A, Anew, m, n)
-  call nvtxEndRange
    
   write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', n, ' x', m, ' mesh'
  
@@ -43,26 +40,30 @@ program jacobi
 
   iter=0
   
-  call nvtxStartRange("while")
+  !$acc data copyin(A(n,m), Anew(n,m))
   do while ( error .gt. tol .and. iter .lt. iter_max )
-
-    call nvtxStartRange("calc")
     error = calcNext(A, Anew, m, n)
-    call nvtxEndRange
-
-    call nvtxStartRange("swap")
     call swap(A, Anew, m, n)
-    call nvtxEndRange
 
-    if(mod(iter,100).eq.0 ) write(*,'(i5,f10.6)'), iter, error
-	
+    if(mod(iter,100).eq.0 ) then
+        write(*,'(i5,f10.6)'), iter, error
+        do i=1,n
+            do j=1,m
+                write(*,'(f10.2)', advance="no"), A(i,j)
+            enddo
+            write(*,*) ' '
+        enddo
+    endif
+
     iter = iter + 1
+enddo
 
-  end do
-  call nvtxEndRange
+  !$acc end data
 
   call cpu_time(stop_time) 
   write(*,'(a,f10.3,a)')  ' completed in ', stop_time-start_time, ' seconds'
 
-  ! deallocate (A,Anew)
+  deallocate (A,Anew)
 end program jacobi
+
+
