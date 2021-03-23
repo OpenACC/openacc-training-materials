@@ -44,7 +44,7 @@ module laplace2d
 	  
       error=0.0_fp_kind
 	  
-	  !$acc kernels
+      !$acc parallel loop
       do j=1,m-2
         do i=1,n-2
           Anew(i,j) = 0.25_fp_kind * ( A(i+1,j  ) + A(i-1,j  ) + &
@@ -52,7 +52,7 @@ module laplace2d
           error = max( error, abs(Anew(i,j)-A(i,j)) )
         end do
       end do
-          !$acc end kernels
+         
       calcNext = error
     end function calcNext
 
