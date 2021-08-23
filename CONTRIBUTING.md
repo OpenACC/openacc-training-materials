@@ -52,6 +52,19 @@ Please use the following style guidelines when making contributions.
   the notebook.
 * A horizontal rule should appear between sections that begin with a level 2
   heading.
+* When a lab participant needs to open a file for editing in a notebook, do not
+  use jupyter's edit links, but rather use the following convention:
+  `**<link text>** (File -> Open -> <path-to-file>)`. This eliminates issues
+  with links breaking when jupyter is launched from a different directory. The
+  `generate_markdown` script will look for this convention to fix the links in
+  markdown.
+* If a cell should not be included in the generated markdown version of the
+  notebook, that cell should be tagged with `remove_cell` by selecting 
+  `View -> Cell Toolbar -> Tags` and adding it. After doing this, change back
+  to `None` from the same menu.
+* After updating a notebook, from a terminal run the
+  `<basedir>/scripts/generate_markdown.sh` script to create an updated markdown
+  version of the file.
 
 ## Contributing Labs/Modules
 
