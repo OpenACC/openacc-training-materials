@@ -35,4 +35,4 @@ ADD docker-configs/default /etc/nginx/sites-available/default
 
 ADD labs/ /home/openacc/labs/
 WORKDIR /home/openacc/labs
-CMD service nginx start && jupyter notebook --no-browser --allow-root --ip=0.0.0.0 --port=8888 --NotebookApp.token="" --notebook-dir=/home/openacc/labs
+CMD service nginx start && jupyter notebook --no-browser --allow-root --ip=0.0.0.0 --port=8888 --NotebookApp.token="" --notebook-dir=/home/openacc/labs --JupyterNotebookApp.default_url="/tree/README.ipynb"

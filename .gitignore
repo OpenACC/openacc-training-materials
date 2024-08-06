@@ -19,3 +19,4 @@ a.out
 *.nvvp
 *.zip
 __pycache__
+venv
